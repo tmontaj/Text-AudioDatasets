@@ -3,8 +3,9 @@ import os, sys
 # import ../
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import data.clean.text as text
-import data.clean.audio as audio
+import data.clean.text as text # pylint: disable=imports 
+import data.clean.audio as audio # pylint: disable=imports 
+
 
 import numpy as np  
 
