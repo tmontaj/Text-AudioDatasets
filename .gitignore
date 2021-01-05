@@ -8,8 +8,10 @@
 # Local History for Visual Studio Code
 .history/
 
-.pytest_cache
+*/.pytest_cache
 env/
 .env/
 .venv/
-*/__pycache__/
+*/__pycache__
+
+*/tmp/
