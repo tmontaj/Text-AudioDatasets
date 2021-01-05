@@ -1,6 +1,7 @@
 import numpy as np
 import inflect
-import re
+import re 
+import tensorflow as tf
 
 _inflect = inflect.engine()
 _decimal_number_re = re.compile(r'([0-9]+\.[0-9]+)')
@@ -122,3 +123,23 @@ def clean_text(text, remove_comma=True):
   if remove_comma:
     text = _remove_commas(text)
   return text
+
+
+def _string2int(text, alphabet_size = 26, first_letter=96):
+   text = [ord(letter)-first_letter for letter in text ]
+   for i in range(len(text)):
+    if text[i] == -50: # -50 = . dot
+      text[i] = alphabet_size+1
+
+    if text[i] == -52: # -50 = , comma
+      text[i] = alphabet_size+2
+
+   return text
+
+def _padd(texts):
+  return tf.keras.preprocessing.sequence.pad_sequences(texts, maxlen=None,
+                                                       dtype='int32', padding='post', value=0.0)
+
+def _one_hot_encode(texts, comma=False, alphabet_size = 26, first_letter=96):
+  depth = alphabet_size+3 if comma else alphabet_size+2
+  return tf.one_hot(texts, depth=depth, axis=2)
