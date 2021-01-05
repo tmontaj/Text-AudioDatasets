@@ -1,0 +1,5 @@
+conda==4.9.2
+librosa==0.8.0
+inflect==5.0.2
+wget==3.2
+soundfile==1.14.3

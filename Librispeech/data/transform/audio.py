@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import librosa as librosa
 import librosa.display
 from scipy import signal
-from IPython.display import Audio
 from scipy.io import wavfile
 
 
