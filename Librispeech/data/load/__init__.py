@@ -6,7 +6,8 @@ import os, sys
 import shutil
 import wget
 import soundfile as sf
- 
+import tensorflow_io as tfio
+
 #create this bar_progress method which is invoked automatically from wget and used in deffrent code
 
 def _bar_progress(current, total, width=80):
@@ -201,9 +202,9 @@ def load(src, splits, remove_organized_path=False, download=True):
                      )
   print("CONGRATS Librispeach is ready to be used at %s" %(organized_path))
 
-load(src="dataset",
-     splits=["dev-clean", "dev-other"],
-     download=False)
+# load(src="dataset",
+#      splits=["dev-clean", "dev-other"],
+#      download=False)
 
 def clean_speakers_file(src):
   """
@@ -300,7 +301,30 @@ def load_all_trans(src):
 
   return pd.concat(df)
 
-load_all_trans(src="dataset/librispeech/data")
+# load_all_trans(src="dataset/librispeech/data")
+
+def sf_load_wav(src, id):
+  """
+  load single wav 
+  
+  Arguments:
+  src -- path to data directory
+  id  -- id to load
+  Returns:
+  wav -- np array of mono sound file
+  sample_rate -- sample rate for librispeech = 16000 
+  """
+
+  # split = split + ("-clean" if isClean else "-other")
+  id = id.split("/")
+  file_name = id[1]+".flac"
+  id[1] = id[1].replace("-", "/")[:-4]
+  path = os.path.join(src, id[0], id[1], file_name)
+  wav, sample_rate = sf.read(path)      
+
+  return wav, sample_rate
+
+
 
 def load_wav(src, id):
   """
@@ -319,6 +343,6 @@ def load_wav(src, id):
   file_name = id[1]+".flac"
   id[1] = id[1].replace("-", "/")[:-4]
   path = os.path.join(src, id[0], id[1], file_name)
-  wav, sample_rate = sf.read(path)      
+  wav, sample_rate = tfio.audio.AudioIOTensor(path)
 
   return wav, sample_rate
