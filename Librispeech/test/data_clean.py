@@ -1,8 +1,8 @@
+# pylint: disable=imports 
 import os, sys
 # import ../
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# pylint: disable=imports 
 import data.clean.text as text
 import data.clean.audio as audio
 
