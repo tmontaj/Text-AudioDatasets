@@ -3,7 +3,10 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # pylint: disable=imports 
-import data.clean.text as text 
+import data.clean.text as text
+import data.clean.audio as audio
+
+import numpy as np  
 
 
 class TestClassText:
@@ -36,3 +39,18 @@ class TestClassText:
 
     def test_normalize_numbersexpand_abbreviations(self):
         pass
+
+
+
+class TestClassAudio:
+
+    def test_audio_cleaning_1(self):
+
+        assert (audio.audio_cleaning(audio=np.array([0,0,00,4,5,6,6,6,6,7,8,5,5,5]),
+               threshold=5) & np.array([5,6,6,6,6,7,8,5,5,5], dtype=np.int64)).any()
+    
+    def test_audio_cleaning_2(self):
+
+        assert audio.audio_cleaning(audio=np.array([0,0,00,4]),
+               threshold=5).size == 0
+
