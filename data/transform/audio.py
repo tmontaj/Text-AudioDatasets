@@ -111,3 +111,15 @@ def melspectrogram(audio, sampling_rate, plot):
     plot_melsprctrogram(spectro)
   
   return spectro
+
+
+  def pad(audios):
+    """
+    padd batch os mono audio 
+    Arguments:
+        audios -- a batch of audio to transform 
+    Returns:
+        audios -- a batch of padded audio 
+    """
+    return tf.keras.preprocessing.sequence.pad_sequences(audios, maxlen=None,
+                                                       dtype='int32', padding='post', value=0.0)

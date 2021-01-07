@@ -1,6 +1,6 @@
 import tensorflow as tf 
 
-def _string2int(text, alphabet_size = 26, first_letter=96):
+def string2int(text, alphabet_size = 26, first_letter=96):
     """
     transforn string to a list of numbers corresponding to letter index
     dot is numberd as alphabet_size + 1 and comma is alphabets_size + 2
@@ -24,7 +24,7 @@ def _string2int(text, alphabet_size = 26, first_letter=96):
 
     return text
 
-def _pad(texts):
+def pad(texts):
     """
     padd batch os text encoded with _string2int
     Arguments:
@@ -35,7 +35,7 @@ def _pad(texts):
     return tf.keras.preprocessing.sequence.pad_sequences(texts, maxlen=None,
                                                        dtype='int32', padding='post', value=0.0)
 
-def _one_hot_encode(texts, comma=False, alphabet_size = 26, first_letter=96):
+def one_hot_encode(texts, comma=False, alphabet_size = 26, first_letter=96):
     """
     one hot encode a batch of text padd with _padd
     Arguments:
@@ -46,4 +46,4 @@ def _one_hot_encode(texts, comma=False, alphabet_size = 26, first_letter=96):
         texts -- a batch of one hot encodded text (letter)
     """
     depth = alphabet_size+3 if comma else alphabet_size+2
-    return tf.one_hot(texts, depth=depth, axis=2) 
+    return tf.one_hot(texts, depth=depth, axis=2, on_value=1, off_value=0) 
