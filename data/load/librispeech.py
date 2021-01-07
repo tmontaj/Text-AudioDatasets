@@ -346,3 +346,20 @@ def load_wav(src, id):
   wav, sample_rate = tfio.audio.AudioIOTensor(path)
 
   return wav, sample_rate
+
+def load_split(src, split, clean=True):
+  """
+  load single split of the dataset as pandas datafram 
+  
+  Arguments:
+  src    -- path to data directory
+  split  -- split name to be loaded (string) e.x. dev
+  clean  -- type of this split clean or not (boolean)
+  Returns:
+  dataset -- pandas dataframe containg the dataset 
+  """
+  dataset = load_all_trans(src)
+  dataset = dataset[dataset["split"==split]]
+  dataset = dataset[dataset["clean"==clean]]
+
+  return dataset
