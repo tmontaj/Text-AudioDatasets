@@ -258,7 +258,7 @@ def load_metadata(data_path):
 
 def load_trans(src, split_name):
   """
-  load single file of trans
+  load single file of transcription 
   
   Arguments:
   src -- path to the file
@@ -283,7 +283,7 @@ def load_trans(src, split_name):
 
 def load_all_trans(src):
   """
-  load single file of trans
+  load single file of transcription
   
   Arguments:
   src -- path to data directory

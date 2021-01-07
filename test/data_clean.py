@@ -38,7 +38,7 @@ class TestClassText:
 
         assert text._expand_abbreviations(text=input) == target
 
-    def test_normalize_numbersexpand_abbreviations(self):
+    def test_normalize_numbers(self):
         pass
 
 

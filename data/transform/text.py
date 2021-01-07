@@ -24,7 +24,7 @@ def _string2int(text, alphabet_size = 26, first_letter=96):
 
     return text
 
-def _padd(texts):
+def _pad(texts):
     """
     padd batch os text encoded with _string2int
     Arguments:
