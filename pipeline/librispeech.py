@@ -19,11 +19,20 @@ split data:
 
 text_audio pipeline:
     - load data
-    - creat tfds 
+    - creat tf ds 
     - shuffel 
     - split into text and audio
     - apply audio and text pipeline
     - zip audio and text based on x,y
+
+audio =_audio pipeline:
+    - load data
+    - creat tf ds 
+    - shuffel 
+    - copy into audio and audio
+    - apply audio and audio pipeline
+    - zip audio and text based on x,y
+
 
 speaker pipeline:
     TBD
@@ -38,7 +47,19 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd 
 
-def text(dataset, batch, remove_comma, alphabet_size, first_letter):
+def _text(dataset, batch, remove_comma, alphabet_size, first_letter):
+    """
+    Text pipeline  
+    
+    Arguments:
+    dataset -- td dataset to be preprocessed 
+    batch   -- batch sizee
+    alphabet_size -- alphabet size of the language 
+    first_letter  -- number of first letter in the alphabet when passed ord()
+    remove_comma  -- flag to remove comma or not
+    Returns:
+    dataset -- cleaned, batched, unshufeld, tf dataset of text
+    """
     dataset = dataset.map(lambda x: clean.text.clean_text(x, remove_comma))
     dataset = dataset.map(lambda x: transform.text.string2int(x, alphabet_size, first_letter))
     dataset = dataset.batch(batch)
@@ -48,9 +69,21 @@ def text(dataset, batch, remove_comma, alphabet_size, first_letter):
     return dataset
 
 
-def audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
-    dataset = dataset.map(lambda x: load.librispeech.load_wav(src, x))
-    dataset = dataset.map(lambda x: clean.audio.audio_cleaning(audio, threshold))
+def _audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
+    
+    """
+    Audio pipeline  
+    
+    Arguments:
+    dataset   -- td dataset to be preprocessed 
+    batch     -- batch sizee
+    threshold -- threshold of silence to be trimed from audio (remove silnce from start and end)
+    Returns:
+    dataset -- cleaned, batched, unshufeld, tf dataset of audio
+    """
+
+    dataset = dataset.map(lambda x: load.librispeech.load_wav(src, x)[0]) # [0] as it return wav, sampling rate
+    dataset = dataset.map(lambda x: clean.audio.audio_cleaning(dataset, threshold))
     if is_spectrogram:
         dataset = dataset.map(lambda x: transform.audio.melspectrogram(x, sampling_rate, False))
     
@@ -59,24 +92,73 @@ def audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
     # dataset = dataset.map(lambda x: )
     return dataset
 
-def split_dataset(x, idx):
+def _split_dataset(x, idx):
+    """
+    used to split tf dataset into sevral datasets
+    """
     return x[idx]
 
 def text_audio(src, split, reverse, buffer_size=1000, **kwargs):
+    """
+    Text and Audio pipeline  
+    
+    Arguments:
+    src       -- path to data directory
+    split     -- split name to be loaded (string) e.x. dev
+    reverse   -- flag, if true dataset returned
+                 is formated (audio, text) else (text, audio)
+    buffer_size -- buffer size for shuffle. Default = 1000
+
+    Returns:
+    dataset -- tf dataset of audio and text preprocessed
+    """
     dataset = load.librispeech.load_split(src, split)
     dataset = dataset[["id", "text"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
     dataset = dataset.shuffle(buffer_size)
     
-    audio_dataset = dataset.map(lambda x: split_dataset(0, x))
-    text_dataset  = dataset.map(lambda x: split_dataset(1, x))
+    audio_dataset = dataset.map(lambda x: _split_dataset(0, x))
+    text_dataset  = dataset.map(lambda x: _split_dataset(1, x))
 
-    audio_dataset = audio(audio_dataset, **kwargs)
-    text_dataset  = text(text_dataset, **kwargs)
+    audio_dataset = _audio(audio_dataset, **kwargs)
+    text_dataset  = _text(text_dataset, **kwargs)
     
     if reverse:
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
     else:
         dataset = tf.data.Dataset.zip((text_dataset, audio_dataset))
 
-    return split_dataset
+    return dataset
+
+
+def audio_audio(src, split, reverse, buffer_size=1000, **kwargs):
+    """
+    spctrogram and audio pipeline  
+    
+    Arguments:
+    src       -- path to data directory
+    split     -- split name to be loaded (string) e.x. dev
+    reverse   -- flag, if true dataset returned
+                 is formated (audio, spectrogram) else (spectrogram, audio)
+    buffer_size -- buffer size for shuffle. Default = 1000
+
+    Returns:
+    dataset -- tf dataset of audio and spectrogram preprocessed
+    """
+    dataset = load.librispeech.load_split(src, split)
+    dataset = [dataset["id"], dataset["id"]]
+    dataset = tf.data.Dataset.from_tensor_slices(dataset)
+    dataset = dataset.shuffle(buffer_size)
+    
+    audio_dataset    = dataset.map(lambda x: _split_dataset(0, x))
+    spectro_dataset  = dataset.map(lambda x: _split_dataset(1, x))
+
+    audio_dataset    = _audio(audio_dataset, is_spectrogram=False, **kwargs)
+    spectro_dataset  = _audio(spectro_dataset, is_spectrogram=True,**kwargs)
+    
+    if reverse:
+        dataset = tf.data.Dataset.zip((audio_dataset, spectro_dataset))
+    else:
+        dataset = tf.data.Dataset.zip((spectro_dataset, audio_dataset))
+
+    return dataset
