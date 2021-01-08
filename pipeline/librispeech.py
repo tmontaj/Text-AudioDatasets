@@ -62,8 +62,8 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter):
     """
     dataset = dataset.map(lambda x: clean.text.clean_text(x, remove_comma))
     dataset = dataset.map(lambda x: transform.text.string2int(x, alphabet_size, first_letter))
-    dataset = dataset.batch(batch)
-    dataset = dataset.map(lambda x: transform.text.pad(x))
+    dataset = dataset.padded_batch(batch)
+    # dataset = dataset.map(lambda x: transform.text.pad(x))
     dataset = dataset.map(lambda x: transform.text.one_hot_encode(x, remove_comma, alphabet_size, first_letter))
 
     return dataset
@@ -87,8 +87,8 @@ def _audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
     if is_spectrogram:
         dataset = dataset.map(lambda x: transform.audio.melspectrogram(x, sampling_rate, False))
     
-    dataset = dataset.batch(batch)
-    dataset = dataset.map(lambda x: transform.audio.pad(x))
+    dataset = dataset.padded_batch(batch)
+    # dataset = dataset.map(lambda x: transform.audio.pad(x))
     # dataset = dataset.map(lambda x: )
     return dataset
 
