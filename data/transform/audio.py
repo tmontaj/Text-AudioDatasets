@@ -113,9 +113,9 @@ def melspectrogram(audio, sampling_rate, plot):
   return spectro
 
 
-  def pad(audios):
+def pad(audios):
     """
-    padd batch os mono audio 
+    padd batch os mono audio (Not working with tf batch)
     Arguments:
         audios -- a batch of audio to transform 
     Returns:

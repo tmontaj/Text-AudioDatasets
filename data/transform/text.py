@@ -26,7 +26,7 @@ def string2int(text, alphabet_size = 26, first_letter=96):
 
 def pad(texts):
     """
-    padd batch os text encoded with _string2int
+    padd batch os text encoded with _string2int (Not working with tf batch)
     Arguments:
         texts -- a batch of text to transform 
     Returns:
@@ -35,7 +35,7 @@ def pad(texts):
     return tf.keras.preprocessing.sequence.pad_sequences(texts, maxlen=None,
                                                        dtype='int32', padding='post', value=0.0)
 
-def one_hot_encode(texts, comma=False, alphabet_size = 26, first_letter=96):
+def one_hot_encode(texts, comma=False, alphabet_size = 26):
     """
     one hot encode a batch of text padd with _padd
     Arguments:
