@@ -45,7 +45,7 @@ def _remove_commas(text):
   return text.replace(',', '')
 
 def _remove_symbols(text):
-  text = re.sub(r'[^a-zA-Z0-9 \'.,]', '', text)
+  text = re.sub(r'[^a-zA-Z0-9 .,]', '', text)
   return text
 
 
@@ -122,6 +122,7 @@ def clean_text(text, remove_comma=True):
   text = _remove_symbols(text)
   if remove_comma:
     text = _remove_commas(text)
+  text = text.strip()
   return text
 
 
