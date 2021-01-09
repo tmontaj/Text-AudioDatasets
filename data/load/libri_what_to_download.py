@@ -88,11 +88,12 @@ def check_librispeech_md5sum(src):
   not_match -- python list of corrupted splits names
   missing   -- python list of missing splits names
   """
-  os.remove(src+"/md5sum.txt")
-  wget.download("https://www.openslr.org/resources/12/md5sum.txt", src)
+  try : os.remove(src+"/librispeech"+"/md5sum.txt")
+  except : pass 
+  wget.download("https://www.openslr.org/resources/12/md5sum.txt", src+"/librispeech"+"/md5sum.txt")
   
-  real_sum         = load_md5sum_file(src)
-  calculated_sum   = calculate_md5sum(main=src+"/out", pattern = '*.tar.gz') #update this line 
+  real_sum         = load_md5sum_file(src+"/librispeech")
+  calculated_sum   = calculate_md5sum(main=src+"/librispeech"+"/out", pattern = '*.tar.gz') #update this line 
   sum_intersection = real_sum.merge(calculated_sum, on=["split"], how="inner")
 
 
@@ -139,6 +140,12 @@ def what_to_download(src, splits):
   missing.extend(not_match)
   required = missing
   download = list(set(splits).intersection(set(required)))
+  
+  download_str = " ".join(download)
+  if download_str == "":
+    download_str = " nothing"
+  print("\nShould download%s" %download_str)
 
   return download
 
+ 
