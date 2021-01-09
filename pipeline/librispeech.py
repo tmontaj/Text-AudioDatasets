@@ -1,4 +1,6 @@
 '''
+module overview
+
 text pipeline:
     - clean text
     - string2num
@@ -26,7 +28,7 @@ text_audio pipeline:
     - zip audio and text based on x,y
 
 audio =_audio pipeline:
-    - load data
+    - load data 
     - creat tf ds 
     - shuffel 
     - copy into audio and audio
@@ -77,6 +79,7 @@ def _audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
     Arguments:
     dataset   -- td dataset to be preprocessed 
     batch     -- batch sizee
+    src       -- path to data directory
     threshold -- threshold of silence to be trimed from audio (remove silnce from start and end)
     Returns:
     dataset -- cleaned, batched, unshufeld, tf dataset of audio
@@ -98,7 +101,9 @@ def _split_dataset(x, idx):
     """
     return x[idx]
 
-def text_audio(src, split, reverse, buffer_size=1000, **kwargs):
+def text_audio(src, split, reverse, batch, threshold,
+                 remove_comma=True, alphabet_size=26,
+                 first_letter=96, sampling_rate=16000, buffer_size=1000):
     """
     Text and Audio pipeline  
     
@@ -107,7 +112,10 @@ def text_audio(src, split, reverse, buffer_size=1000, **kwargs):
     split     -- split name to be loaded (string) e.x. dev
     reverse   -- flag, if true dataset returned
                  is formated (audio, text) else (text, audio)
-    buffer_size -- buffer size for shuffle. Default = 1000
+    buffer_size -- buffer size for shuffle. (Default = 1000)
+    alphabet_size -- alphabet size of the language (Default = 26)
+    first_letter  -- number of first letter in the alphabet when passed ord() (Default = 96)
+    remove_comma  -- flag to remove comma or not (Default = True)
 
     Returns:
     dataset -- tf dataset of audio and text preprocessed
@@ -120,8 +128,18 @@ def text_audio(src, split, reverse, buffer_size=1000, **kwargs):
     audio_dataset = dataset.map(lambda x: _split_dataset(0, x))
     text_dataset  = dataset.map(lambda x: _split_dataset(1, x))
 
-    audio_dataset = _audio(audio_dataset, **kwargs)
-    text_dataset  = _text(text_dataset, **kwargs)
+    audio_dataset = _audio(dataset=audio_dataset,
+                             src=src,
+                             batch=batch,
+                             is_spectrogram=False,
+                             threshold=threshold,
+                             sampling_rate=sampling_rate)
+
+    text_dataset  = _text(dataset=text_dataset,
+                             batch=batch,
+                             remove_comma=remove_comma,
+                             alphabet_size=alphabet_size,
+                             first_letter=first_letter)
     
     if reverse:
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
@@ -131,7 +149,8 @@ def text_audio(src, split, reverse, buffer_size=1000, **kwargs):
     return dataset
 
 
-def audio_audio(src, split, reverse, buffer_size=1000, **kwargs):
+def audio_audio(src, split, reverse, batch,
+                 threshold, sampling_rate=16000, buffer_size=1000):
     """
     spctrogram and audio pipeline  
     
@@ -140,6 +159,9 @@ def audio_audio(src, split, reverse, buffer_size=1000, **kwargs):
     split     -- split name to be loaded (string) e.x. dev
     reverse   -- flag, if true dataset returned
                  is formated (audio, spectrogram) else (spectrogram, audio)
+    batch     -- batch sizee
+    threshold -- threshold of silence to be trimed from audio (remove silnce from start and end)
+    sampling_rate -- audio sampling rate. Default = 16000
     buffer_size -- buffer size for shuffle. Default = 1000
 
     Returns:
@@ -153,8 +175,19 @@ def audio_audio(src, split, reverse, buffer_size=1000, **kwargs):
     audio_dataset    = dataset.map(lambda x: _split_dataset(0, x))
     spectro_dataset  = dataset.map(lambda x: _split_dataset(1, x))
 
-    audio_dataset    = _audio(audio_dataset, is_spectrogram=False, **kwargs)
-    spectro_dataset  = _audio(spectro_dataset, is_spectrogram=True,**kwargs)
+    audio_dataset    = _audio(dataset=audio_dataset,
+                                src=src,
+                                batch=batch,
+                                is_spectrogram=False,
+                                threshold=threshold,
+                                sampling_rate=sampling_rate)
+
+    spectro_dataset  = _audio(dataset=spectro_dataset, 
+                                src=src,
+                                batch=batch,
+                                is_spectrogram=True,
+                                threshold=threshold,
+                                sampling_rate=sampling_rate)
     
     if reverse:
         dataset = tf.data.Dataset.zip((audio_dataset, spectro_dataset))
