@@ -290,6 +290,7 @@ def load_all_trans(src):
   Returns:
   all_trans -- pandas dataframe of all trans file
   """
+  src = src+"/librispeech/data"
   splits = [x for x in Path(src).iterdir() if x.is_dir()]
   df = []
 
@@ -298,6 +299,7 @@ def load_all_trans(src):
     for src in Path(split).rglob('*.trans.txt'):
       split = split.split("/")[-1]
       df.append(load_trans(src, split))
+
 
   return pd.concat(df)
 
@@ -347,19 +349,22 @@ def load_wav(src, id):
 
   return wav, sample_rate
 
-def load_split(src, split, clean=True):
+def load_split(src, split):
   """
   load single split of the dataset as pandas datafram 
   
   Arguments:
   src    -- path to data directory
   split  -- split name to be loaded (string) e.x. dev
-  clean  -- type of this split clean or not (boolean)
   Returns:
   dataset -- pandas dataframe containg the dataset 
   """
   dataset = load_all_trans(src)
-  dataset = dataset[dataset["split"==split]]
-  dataset = dataset[dataset["clean"==clean]]
+  
+  split, clean = split.split("-")[0], split.split("-")[1] 
+  clean        = True if clean == "clean" else False
+
+  dataset = dataset[dataset.split == split]
+  dataset = dataset[dataset.isClean == clean] 
 
   return dataset

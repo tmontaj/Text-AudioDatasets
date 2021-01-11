@@ -143,8 +143,8 @@ def what_to_download(src, splits):
   
   download_str = " ".join(download)
   if download_str == "":
-    download_str = " nothing"
-  print("\nShould download%s" %download_str)
+    download_str = "nothing"
+  print("\nShould download %s" %download_str)
 
   return download
 

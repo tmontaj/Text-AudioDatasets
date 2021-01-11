@@ -21,3 +21,5 @@ home = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = os.path.join(home, "dataset")
 
 safe_load(load, wtd, src, ["dev-clean"])
+
+pipeline.audio_audio(src=src, batch=3, split="dev-clean", reverse=False, threshold=5)
