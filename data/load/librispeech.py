@@ -341,14 +341,13 @@ def load_wav(src, id):
   sample_rate -- sample rate for librispeech = 16000 
   """
 
-  # split = split + ("-clean" if isClean else "-other")
-  # src, id = src.decode(), id.decode()
   id = tf.strings.split(id, sep="/")
   file_name = id[1] + ".flac"
   sub_folder = tf.strings.regex_replace(id[1], pattern="-", rewrite="/")
   sub_folder = tf.strings.regex_replace(sub_folder, pattern="(....)$", rewrite="") # = [:-4]
-  path = src+"/librispeech/data/"+id[0]+"/"+sub_folder+"/"+file_name
+  path  = src+"/librispeech/data/"+id[0]+"/"+sub_folder+"/"+file_name
   audio = tfio.audio.AudioIOTensor(path, dtype=tf.int32).to_tensor()
+  audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=unexpected-keyword-arg
 
   return audio
   # return tf.numpy_function(_load_wav, [src, id], [tf.int32])

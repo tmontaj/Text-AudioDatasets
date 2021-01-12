@@ -99,11 +99,11 @@ def melspectrogram(audio, sampling_rate, plot):
   Return:
   spectro -- genrated mel spectrogram
   """
-  if type(audio) == type([]):
-    audio= tf.convert_to_tensor(audio, dtype=tf.float32)
-  else:
-    audio= audio.astype(dtype=tf.float32)
-
+#   if type(audio) == type([]):
+#     audio = tf.convert_to_tensor(audio, dtype=tf.float32)
+#   else:
+#     audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=unexpected-keyword-arg
+# 
   spectro = tfio.experimental.audio.spectrogram(audio, nfft=800, window=512, stride=200)
   spectro = tfio.experimental.audio.melscale(spectro, rate=sampling_rate, mels=80, fmin=0, fmax=8000)
   
