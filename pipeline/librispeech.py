@@ -44,6 +44,14 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data import clean, transform # pylint: disable=imports 
+
+import data.clean.audio as audio # pylint: disable=imports 
+import data.clean.text as text # pylint: disable=imports 
+
+import data.transform.audio as t_audio # pylint: disable=imports 
+import data.transform.text  as t_text # pylint: disable=imports 
+
+
 from data import load # pylint: disable=imports 
 import tensorflow as tf
 import numpy as np
@@ -84,13 +92,13 @@ def _audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
     Returns:
     dataset -- cleaned, batched, unshufeld, tf dataset of audio
     """
-
-    dataset = dataset.map(lambda x: load.librispeech.load_wav(src, x)[0]) # [0] as it return wav, sampling rate
-    dataset = dataset.map(lambda x: clean.audio.audio_cleaning(dataset, threshold))
-    if is_spectrogram:
-        dataset = dataset.map(lambda x: transform.audio.melspectrogram(x, sampling_rate, False))
     
-    dataset = dataset.padded_batch(batch)
+    dataset = dataset.map(lambda x: load.librispeech.load_wav(src, x)) # [0] as it return wav, sampling rate
+    dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold))
+    # if is_spectrogram:
+    #     dataset = dataset.map(lambda x: transform.audio.melspectrogram(x, sampling_rate, False))
+    
+    # dataset = dataset.batch(batch)
     # dataset = dataset.map(lambda x: transform.audio.pad(x))
     # dataset = dataset.map(lambda x: )
     return dataset
@@ -99,8 +107,7 @@ def _split_dataset(x, idx):
     """
     used to split tf dataset into sevral datasets
     """
-    print(x)
-    return x #x[idx]
+    return x[idx]
 
 def text_audio(src, split, reverse, batch, threshold,
                  remove_comma=True, alphabet_size=26,
@@ -169,21 +176,27 @@ def audio_audio(src, split, reverse, batch,
     dataset -- tf dataset of audio and spectrogram preprocessed
     """
     dataset = load.librispeech.load_split(src, split)
-    dataset = [dataset["id"], dataset["id"]]
+    # print(dataset["id"][0])
+    dataset["id2"] = dataset["id"]
+    dataset = dataset[["id", "id2"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
-    dataset = dataset.shuffle(buffer_size)
+    # dataset = dataset.shuffle(buffer_size)
     
     audio_dataset    = dataset.map(lambda x: _split_dataset(x=x, idx=0))
-    print(audio_dataset)
-    # spectro_dataset  = dataset.map(lambda x: _split_dataset(x=x, idx=0))
+    # tf.print(audio_dataset)
+    spectro_dataset  = dataset.map(lambda x: _split_dataset(x=x, idx=0))
+    # tf.print(spectro_dataset)
 
-    # audio_dataset    = _audio(dataset=audio_dataset,
-    #                             src=src,
-    #                             batch=batch,
-    #                             is_spectrogram=False,
-    #                             threshold=threshold,
-    #                             sampling_rate=sampling_rate)
+    audio_dataset    = _audio(dataset=audio_dataset,
+                                src=src,
+                                batch=batch,
+                                is_spectrogram=False,
+                                threshold=threshold,
+                                sampling_rate=sampling_rate)
 
+    x = audio_dataset.take(1)
+    for i in x:
+        print(i)
     # spectro_dataset  = _audio(dataset=spectro_dataset, 
     #                             src=src,
     #                             batch=batch,

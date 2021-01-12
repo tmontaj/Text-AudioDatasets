@@ -7,6 +7,7 @@ import shutil
 import wget
 import soundfile as sf
 import tensorflow_io as tfio
+import tensorflow as tf
 
 #create this bar_progress method which is invoked automatically from wget and used in deffrent code
 
@@ -327,27 +328,30 @@ def sf_load_wav(src, id):
   return wav, sample_rate
 
 
-
+# def load_wav(src, id):
 def load_wav(src, id):
   """
   load single wav 
   
   Arguments:
   src -- path to data directory
-  id  -- id to load
+  id  -- id to load (i.e dev-clean/7850-111771-0000)
   Returns:
   wav -- np array of mono sound file
   sample_rate -- sample rate for librispeech = 16000 
   """
 
   # split = split + ("-clean" if isClean else "-other")
-  id = id.split("/")
-  file_name = id[1]+".flac"
-  id[1] = id[1].replace("-", "/")[:-4]
-  path = os.path.join(src, id[0], id[1], file_name)
-  wav, sample_rate = tfio.audio.AudioIOTensor(path)
+  # src, id = src.decode(), id.decode()
+  id = tf.strings.split(id, sep="/")
+  file_name = id[1] + ".flac"
+  sub_folder = tf.strings.regex_replace(id[1], pattern="-", rewrite="/")
+  sub_folder = tf.strings.regex_replace(sub_folder, pattern="(....)$", rewrite="") # = [:-4]
+  path = src+"/librispeech/data/"+id[0]+"/"+sub_folder+"/"+file_name
+  audio = tfio.audio.AudioIOTensor(path, dtype=tf.int32).to_tensor()
 
-  return wav, sample_rate
+  return audio
+  # return tf.numpy_function(_load_wav, [src, id], [tf.int32])
 
 def load_split(src, split):
   """

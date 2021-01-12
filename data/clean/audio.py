@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 def audio_cleaning_old(arr, threshold):
   i=0
@@ -17,33 +18,37 @@ def audio_cleaning_old(arr, threshold):
   return arr_new
 
 def audio_cleaning(audio, threshold):
-  """
-  clean audio from starting and trailing silence 
-  
-  Arguments:
-  audio -- audio as np.array or tf tensor
-  threshold -- path to the file
-  Returns:
-  audio -- clean audio 
-  """
-  found_start = False
-  found_tail  = False
 
-  start = 0
-  tail  = audio.shape[0]-1
-
-  while True:
-    if found_start and found_tail: break
-    if start >= tail: break
+  def _audio_cleaning(audio, threshold):
+    """
+    clean audio from starting and trailing silence 
     
-    if not found_start and audio[start]<threshold:
-      start+=1
-    else: 
-      found_start = True
+    Arguments:
+    audio -- audio as np.array or tf tensor
+    threshold -- path to the file
+    Returns:
+    audio -- clean audio 
+    """
+    found_start = False
+    found_tail  = False
 
-    if not found_tail and audio[tail]<threshold:
-      tail-=1
-    else: 
-      found_tail = True
+    start = 0
+    tail  = audio.shape[0]-1
 
-  return audio[start:tail+1]
+    while True:
+      if found_start and found_tail: break
+      if start >= tail: break
+      
+      if not found_start and audio[start]<threshold:
+        start+=1
+      else: 
+        found_start = True
+
+      if not found_tail and audio[tail]<threshold:
+        tail-=1
+      else: 
+        found_tail = True
+
+    return audio[start:tail+1]
+
+  return tf.numpy_function(_audio_cleaning, [audio, threshold], [tf.float32])
