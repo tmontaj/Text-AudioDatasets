@@ -347,11 +347,11 @@ def load_wav(src, id):
   sub_folder = tf.strings.regex_replace(sub_folder, pattern="(....)$", rewrite="") # = [:-4]
   path  = src+"/librispeech/data/"+id[0]+"/"+sub_folder+"/"+file_name
   audio = tfio.audio.AudioIOTensor(path, dtype=tf.int32).to_tensor()
-  audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=unexpected-keyword-arg
+  audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=[unexpected-keyword-arg, no-value-for-parameter]
 
   return audio
   # return tf.numpy_function(_load_wav, [src, id], [tf.int32])
-
+ 
 def load_split(src, split):
   """
   load single split of the dataset as pandas datafram 

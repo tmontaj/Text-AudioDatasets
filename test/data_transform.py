@@ -13,7 +13,7 @@ import tensorflow as tf
 class TestClassText:
     def test_string2int_eng(self):
         input = "abcxyz.,"
-        assert text.string2int(input) == [1,2,3,24,25,26,27,28]
+        assert text.string2int(input).numpy().tolist() == [1,2,3,24,25,26,27,28]
 
     def test_one_hot_encode(self):
         input = [[1 ,5, 4, 3, 0, 30]]

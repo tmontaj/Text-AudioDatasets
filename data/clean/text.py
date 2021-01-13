@@ -105,8 +105,7 @@ def _expand_abbreviations(text):
     text = re.sub(regex, replacement, text)
   return text
 
-
-def clean_text(text, remove_comma=True):
+def _clean_text(text, remove_comma=True):
   """
   clean text from symbols, remove (some) abbreviations, lowercase, and normaize numbers  
   

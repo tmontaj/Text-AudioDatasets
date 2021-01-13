@@ -22,4 +22,8 @@ src = os.path.join(home, "dataset")
 
 safe_load(load, wtd, src, ["dev-clean"])
 
-pipeline.audio_audio(src=src, batch=3, split="dev-clean", reverse=False, threshold=5)
+# pipeline.audio_audio(src=src, batch=3, split="dev-clean", reverse=False, threshold=5)
+
+pipeline.text_audio(src=src, split="dev-clean", reverse="False", batch=2, threshold=5,
+                 is_spectrogram=False, remove_comma=True, alphabet_size=26, 
+                 first_letter=96, sampling_rate=16000, buffer_size=1000)
