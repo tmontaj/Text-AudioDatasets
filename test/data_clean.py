@@ -3,8 +3,8 @@ import os, sys
 # import ../
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import data.clean.text as text # pylint: disable=imports 
-import data.clean.audio as audio # pylint: disable=imports 
+from data.clean import text # pylint: disable=imports 
+from data.clean import audio # pylint: disable=imports 
 
 
 import numpy as np  
@@ -55,7 +55,7 @@ class TestClassText:
 
 
 class TestClassAudio:
-
+    
     def test_audio_cleaning_1(self):
 
         assert (audio.audio_cleaning(audio=np.array([0,0,00,4,5,6,6,6,6,7,8,5,5,5]),

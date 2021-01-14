@@ -132,7 +132,7 @@ def text_audio(src, split, reverse, batch, threshold,
     dataset -- tf dataset of audio and text preprocessed
     """
     dataset = load.librispeech.load_split(src, split)
-    dataset["text"] = dataset["text"].map(lambda x : text._clean_text(x, remove_comma))
+    dataset["text"] = dataset["text"].map(lambda x : text.clean_text(x, remove_comma))
     dataset = dataset[["id", "text"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
     if buffer_size:
