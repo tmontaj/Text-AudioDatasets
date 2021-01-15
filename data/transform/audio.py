@@ -87,7 +87,8 @@ def plot_melsprctrogram(spectro):
   plt.figure()
   plt.imshow(dp.numpy())
 
-def melspectrogram(audio, sampling_rate, plot):
+def melspectrogram(audio, sampling_rate, plot, nfft=800, window=512,
+                   stride=200, mels=80, fmin=0, fmax=8000):
   """
   genrate mel spectrogram of mono audio 
 

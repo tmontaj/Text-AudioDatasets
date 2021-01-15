@@ -13,20 +13,16 @@ from hprams.test import hprams  # pylint: disable=imports
 #  pipeline imports
 import pipeline.librispeech as pipeline # pylint: disable=imports 
 
-# hprams.splits
 
 print(os.path.dirname(os.path.abspath(__file__)))
 
 home = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = os.path.join(home, "dataset")
 
-safe_load(load, wtd, src, ["dev-clean"])
+safe_load(load, wtd, src, hprams["splits"])
 
-# pipeline.audio_audio(src=src, batch=3, split="dev-clean", reverse=False, threshold=5)
 
-x = pipeline.text_audio(src=src, split="dev-clean", reverse="False", batch=2, threshold=5,
-                 is_spectrogram=False, remove_comma=True, alphabet_size=26, 
-                 first_letter=96, sampling_rate=16000, buffer_size=1000)
+x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
 
 x = x.take(1)
 for i in x:

@@ -75,7 +75,6 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter):
     Returns:
     dataset -- cleaned, batched, unshufeld, tf dataset of text
     """
-    dataset = dataset.map(printer)
     dataset = dataset.map(lambda x: transform.text.string2int(x, alphabet_size, first_letter))
     dataset = dataset.padded_batch(batch)
     dataset = dataset.map(lambda x: transform.text.one_hot_encode(x, remove_comma, alphabet_size))
@@ -83,7 +82,8 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter):
     return dataset
 
 
-def _audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
+def _audio(dataset, batch, src, is_spectrogram,
+            threshold, melspectrogram={}, sampling_rate=16000):
     
     """
     Audio pipeline  
@@ -98,10 +98,10 @@ def _audio(dataset, batch, src, is_spectrogram, threshold, sampling_rate=16000):
     """
     
     dataset = dataset.map(lambda x: load.librispeech.load_wav(src, x)) 
-    # dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold))
+    dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold))
     
     if is_spectrogram:
-        dataset = dataset.map(lambda x: transform.audio.melspectrogram(x, sampling_rate, False))
+        dataset = dataset.map(lambda x: transform.audio.melspectrogram(x, sampling_rate, False, **melspectrogram))
 
     dataset = dataset.padded_batch(batch)
     return dataset
@@ -113,8 +113,9 @@ def _split_dataset(x, idx):
     return x[idx]
 
 def text_audio(src, split, reverse, batch, threshold,
-                 is_spectrogram, remove_comma=True, alphabet_size=26, 
-                 first_letter=96, sampling_rate=16000, buffer_size=1000):
+                 is_spectrogram, melspectrogram={},remove_comma=True,
+                 alphabet_size=26, first_letter=96, sampling_rate=16000,
+                 buffer_size=1000):
     """
     Text and Audio pipeline  
     
@@ -145,6 +146,7 @@ def text_audio(src, split, reverse, batch, threshold,
                              src=src,
                              batch=batch,
                              is_spectrogram=is_spectrogram,
+                             melspectrogram=melspectrogram,
                              threshold=threshold,
                              sampling_rate=sampling_rate)
 
@@ -162,7 +164,7 @@ def text_audio(src, split, reverse, batch, threshold,
     return dataset
 
 
-def audio_audio(src, split, reverse, batch,
+def audio_audio(src, split, reverse, batch, melspectrogram,
                  threshold, sampling_rate=16000, buffer_size=1000):
     """
     spctrogram and audio pipeline  
@@ -194,6 +196,7 @@ def audio_audio(src, split, reverse, batch,
                                 src=src,
                                 batch=batch,
                                 is_spectrogram=False,
+                                melspectrogram=melspectrogram,
                                 threshold=threshold,
                                 sampling_rate=sampling_rate)
 
@@ -201,6 +204,7 @@ def audio_audio(src, split, reverse, batch,
                                 src=src,
                                 batch=batch,
                                 is_spectrogram=True,
+                                melspectrogram=melspectrogram,
                                 threshold=threshold,
                                 sampling_rate=sampling_rate)
     
