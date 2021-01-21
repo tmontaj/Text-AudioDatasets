@@ -27,9 +27,9 @@ for i in x:
     print(i)
 
 
-x = pipeline.audio_audio(src=src, split="dev-clean", reverse="False", batch=2, threshold=5,
-                         sampling_rate=16000, buffer_size=1000)
+# x = pipeline.audio_audio(src=src, split="dev-clean", reverse="False", batch=2, threshold=5,
+#                          sampling_rate=16000, buffer_size=1000)
 
-x = x.take(1)
-for i in x:
-    print(i)
+# x = x.take(1)
+# for i in x:
+#     print(i)
