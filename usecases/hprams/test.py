@@ -45,6 +45,20 @@ hprams = {
                 "fmax": 8000
             }
         }
+    },"speaker_verification": {
+        "batch": 2,
+        "threshold": 5,
+        "sampling_rate": 16000,
+        "buffer_size": 1000,
+        "num_recordes": 3,
+        "melspectrogram": {
+                "nfft": 800,
+                "window": 512,
+                "stride": 200,
+                "mels": 80,
+                "fmin": 0,
+                "fmax": 8000
+        }
     },
 
 }
