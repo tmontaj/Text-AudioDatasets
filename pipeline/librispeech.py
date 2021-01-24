@@ -39,6 +39,11 @@ audio =_audio pipeline:
 speaker pipeline:
     TBD
 '''
+import os
+import sys
+# import ../
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import tensorflow as tf
 import numpy as np
 from data import clean, transform  # pylint: disable=imports
@@ -48,10 +53,6 @@ import data.transform.audio as t_audio  # pylint: disable=imports
 import data.transform.text as t_text  # pylint: disable=imports
 from data import load  # pylint: disable=imports
 import pandas as pd
-import os
-import sys
-# import ../
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def printer(x):
