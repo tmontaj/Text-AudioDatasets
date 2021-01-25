@@ -97,7 +97,7 @@ def _audio(dataset, batch, src, is_spectrogram,
     dataset -- cleaned, batched, unshufeld, tf dataset of audio
     """
 
-    dataset = dataset.map(lambda x: load.librispeech.load_wav(src, x))
+    dataset = dataset.map(lambda x: load.load_wav(src, x))
     dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold))
 
     if is_spectrogram:
@@ -118,7 +118,7 @@ def _speaker(speaker, data, num_recordes,
         src, split = data[0].decode(), data[1].decode()
         speaker = speaker.decode()
 
-        data = load.librispeech.load_split(src, split)
+        data = load.load_split(src, split)
 
         recordes = []
         speaker = data[data["speaker"] == speaker]
@@ -134,7 +134,7 @@ def _speaker(speaker, data, num_recordes,
             rec = data.iloc[idx, :]
             id_ = rec["id"]
 
-            sample = load.librispeech.load_wav(src, id_)
+            sample = load.load_wav(src, id_)
             sample = audio.audio_cleaning(sample, threshold)
             len_ = sampling_rate*max_time
             start = 0
@@ -146,7 +146,7 @@ def _speaker(speaker, data, num_recordes,
                     high=speaker.shape[0]).tolist()
                 rand_idx.append(rand_idx_[0])
                 continue
-
+            sample = tf.squeeze(sample, axis =-1)
             sample = transform.audio.melspectrogram(
                     sample, sampling_rate, False, **melspectrogram)
 
