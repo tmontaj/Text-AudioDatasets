@@ -51,9 +51,9 @@ import data.clean.audio as audio  # pylint: disable=imports
 import data.clean.text as text  # pylint: disable=imports
 import data.transform.audio as t_audio  # pylint: disable=imports
 import data.transform.text as t_text  # pylint: disable=imports
-import data.load  # pylint: disable=imports
+import data.load.librispeech as load # pylint: disable=imports
 import pandas as pd
-
+ 
 
 def printer(x):
     tf.print("||||||printer|||||||")
@@ -192,7 +192,7 @@ def text_audio(src, split, reverse, batch, threshold,
     Returns:
     dataset -- tf dataset of audio and text preprocessed
     """
-    dataset = load.librispeech.load_split(src, split)
+    dataset = load.load_split(src, split)
     dataset["text"] = dataset["text"].map(
         lambda x: text.clean_text(x, remove_comma))
     dataset = dataset[["id", "text"]]
@@ -243,7 +243,7 @@ def audio_audio(src, split, reverse, batch, melspectrogram,
     Returns:
     dataset -- tf dataset of audio and spectrogram preprocessed
     """
-    dataset = load.librispeech.load_split(src, split)
+    dataset = load.load_split(src, split)
     dataset["id2"] = dataset["id"]
     dataset = dataset[["id", "id2"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
@@ -281,7 +281,7 @@ def speaker_verification(src, split, batch, melspectrogram,
                          num_recordes, threshold, max_time=5,
                          sampling_rate=16000, buffer_size=1000):
 
-    data = load.librispeech.load_split(src, split)
+    data = load.load_split(src, split)
     dataset = data["speaker"]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
     if buffer_size:
