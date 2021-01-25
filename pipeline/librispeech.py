@@ -51,7 +51,7 @@ import data.clean.audio as audio  # pylint: disable=imports
 import data.clean.text as text  # pylint: disable=imports
 import data.transform.audio as t_audio  # pylint: disable=imports
 import data.transform.text as t_text  # pylint: disable=imports
-from data import load  # pylint: disable=imports
+import data.load  # pylint: disable=imports
 import pandas as pd
 
 
