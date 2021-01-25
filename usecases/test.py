@@ -21,19 +21,19 @@ src = os.path.join(home, "dataset")
 safe_load(load, wtd, src, hprams["splits"])
 
 
-# x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
+x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
 
-# x = x.take(1)
-# for i in x:
-#     print(i)
+x = x.take(1)
+for i in x:
+    print(i)
 
 
-# x = pipeline.audio_audio(src=src, split="dev-clean", reverse="False", batch=2, threshold=5,
-#                          sampling_rate=16000, buffer_size=1000)
+x = pipeline.audio_audio(src=src, split="dev-clean", 
+                         sampling_rate=16000, **hprams["audio_audio"])
 
-# x = x.take(1)
-# for i in x:
-#     print(i)
+x = x.take(1)
+for i in x:
+    print(i)
 
 
 x = pipeline.speaker_verification(

@@ -27,26 +27,20 @@ hprams = {
         }
     },
     "audio_audio": {
-        "split": "dev-clean",
         "reverse": "False",
         "batch": 2,
         "threshold": 5,
-        "sampling_rate": 16000,
         "buffer_size": 1000,
         "melspectrogram": {
-            "spectrogram": {
                 "nfft": 800,
                 "window": 512,
-                "stride": 200
-            },
-            "melscale": {
+                "stride": 200,
                 "mels": 80,
                 "fmin": 0,
                 "fmax": 8000
-            }
         }
     },"speaker_verification": {
-        "batch": 2,
+        "batch": 32,
         "threshold": 5,
         "sampling_rate": 16000,
         "buffer_size": 1000,

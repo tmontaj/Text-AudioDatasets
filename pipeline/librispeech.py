@@ -99,6 +99,7 @@ def _audio(dataset, batch, src, is_spectrogram,
 
     dataset = dataset.map(lambda x: load.load_wav(src, x))
     dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold))
+    dataset = dataset.map(lambda x: tf.squeeze(x, axis =-1))
 
     if is_spectrogram:
         dataset = dataset.map(lambda x: transform.audio.melspectrogram(
