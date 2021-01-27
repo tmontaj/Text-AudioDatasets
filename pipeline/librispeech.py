@@ -75,10 +75,10 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter):
     dataset -- cleaned, batched, unshufeld, tf dataset of text
     """
     dataset = dataset.map(lambda x: transform.text.string2int(
-        x, alphabet_size, first_letter))
+        x, alphabet_size, first_letter),num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.padded_batch(batch)
     dataset = dataset.map(lambda x: transform.text.one_hot_encode(
-        x, remove_comma, alphabet_size))
+        x, remove_comma, alphabet_size),num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     return dataset
 
@@ -97,13 +97,17 @@ def _audio(dataset, batch, src, is_spectrogram,
     dataset -- cleaned, batched, unshufeld, tf dataset of audio
     """
 
-    dataset = dataset.map(lambda x: load.load_wav(src, x))
-    dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold))
-    dataset = dataset.map(lambda x: tf.squeeze(x, axis =-1))
+    dataset = dataset.map(lambda x: load.load_wav(src, x),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(lambda x: tf.squeeze(x, axis =-1),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     if is_spectrogram:
         dataset = dataset.map(lambda x: transform.audio.melspectrogram(
-            x, sampling_rate, False, **melspectrogram))
+            x, sampling_rate, False, **melspectrogram),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     dataset = dataset.padded_batch(batch)
     return dataset
@@ -201,8 +205,10 @@ def text_audio(src, split, reverse, batch, threshold,
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
 
-    audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0))
-    text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1))
+    audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
+                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
+                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     audio_dataset = _audio(dataset=audio_dataset,
                            src=src,
@@ -222,7 +228,7 @@ def text_audio(src, split, reverse, batch, threshold,
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
     else:
         dataset = tf.data.Dataset.zip((text_dataset, audio_dataset))
-
+    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return dataset
 
 
@@ -251,8 +257,10 @@ def audio_audio(src, split, reverse, batch, melspectrogram,
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
 
-    audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0))
-    spectro_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0))
+    audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
+                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    spectro_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
+                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     audio_dataset = _audio(dataset=audio_dataset,
                            src=src,
@@ -274,7 +282,7 @@ def audio_audio(src, split, reverse, batch, melspectrogram,
         dataset = tf.data.Dataset.zip((audio_dataset, spectro_dataset))
     else:
         dataset = tf.data.Dataset.zip((spectro_dataset, audio_dataset))
-
+    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return dataset
 
 
@@ -294,8 +302,9 @@ def speaker_verification(src, split, batch, melspectrogram,
                                                      threshold=threshold,
                                                      melspectrogram=melspectrogram,
                                                      sampling_rate=sampling_rate,
-                                                     max_time=5))
+                                                     max_time=5),
+                                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     speaker_dataset = speaker_dataset.batch(batch)
-
+    speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return speaker_dataset
