@@ -271,6 +271,7 @@ def load_trans(src, split_name):
 
   df = pd.read_csv(src,names=['data'])
   df[['id','text']] = df["data"].str.split(" ", 1, expand=True)
+  df['text_len'] = df['text'].str.len().astype(np.str)
   df[['speaker', 'chapter', 'index']] = df["id"].str.split("-", expand=True)
   df[["split"]] = split[0]
   # df[["split"]] = split[0].split("/")[-1]
@@ -344,14 +345,21 @@ def load_wav(src, id):
   id = tf.strings.split(id, sep="/")
   file_name = id[1] + ".flac"
   sub_folder = tf.strings.regex_replace(id[1], pattern="-", rewrite="/")
-  sub_folder = tf.strings.regex_replace(sub_folder, pattern="(....)$", rewrite="") # = [:-4]
+  sub_folder = tf.strings.regex_replace(sub_folder, pattern="(....)$", rewrite="") # = [:-4] remove last 4 char
   path  = src+"/librispeech/data/"+id[0]+"/"+sub_folder+"/"+file_name
   audio = tfio.audio.AudioIOTensor(path, dtype=tf.int32).to_tensor()
   audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=[unexpected-keyword-arg, no-value-for-parameter]
 
   return audio
   # return tf.numpy_function(_load_wav, [src, id], [tf.int32])
- 
+def get_audio_len(src, dataset):
+  def load_wav_len(id):
+    return load_wav(src, id).shape[0]
+
+  id = dataset["id"]
+  dataset["audio_len"] = id.apply(load_wav_len)
+  return dataset
+
 def load_split(src, split):
   """
   load single split of the dataset as pandas datafram 
@@ -363,7 +371,9 @@ def load_split(src, split):
   dataset -- pandas dataframe containg the dataset 
   """
   dataset = load_all_trans(src)
-  
+  # print(dataset["text_len"])
+  dataset = get_audio_len(src, dataset)
+
   split, clean = split.split("-")[0], split.split("-")[1] 
   clean        = True if clean == "clean" else False
 

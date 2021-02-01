@@ -5,6 +5,7 @@ hprams = {
     "splits": ["dev-clean"],
     "text_audio": {
         "reverse": "False",
+        "len_": True,
         "batch": 2,
         "threshold": 5,
         "is_spectrogram": False,

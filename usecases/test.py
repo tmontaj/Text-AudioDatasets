@@ -28,17 +28,17 @@ for i in x:
     print(i)
 
 
-x = pipeline.audio_audio(src=src, split="dev-clean", 
-                         sampling_rate=16000, **hprams["audio_audio"])
+# x = pipeline.audio_audio(src=src, split="dev-clean", 
+#                          sampling_rate=16000, **hprams["audio_audio"])
 
-x = x.take(1)
-for i in x:
-    print(i)
+# x = x.take(1)
+# for i in x:
+#     print(i)
 
 
-x = pipeline.speaker_verification(
-    src=src, split="dev-clean", **hprams["speaker_verification"])
+# x = pipeline.speaker_verification(
+#     src=src, split="dev-clean", **hprams["speaker_verification"])
 
-x = x.take(1)
-for i in x:
-    print(i)
+# x = x.take(1)
+# for i in x:
+#     print(i)

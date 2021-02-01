@@ -61,24 +61,34 @@ def printer(x):
     return x
 
 
-def _text(dataset, batch, remove_comma, alphabet_size, first_letter):
+def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
+           lengths, len_=False):
     """
     Text pipeline  
 
     Arguments:
-    dataset -- td dataset to be preprocessed 
+    dataset -- td dataset to be preprocessed (text)
     batch   -- batch sizee
     alphabet_size -- alphabet size of the language 
     first_letter  -- number of first letter in the alphabet when passed ord()
     remove_comma  -- flag to remove comma or not
+    len_  -- flag to return length of text witout padding
+    dataset -- td dataset of text length (len(text))
+
     Returns:
     dataset -- cleaned, batched, unshufeld, tf dataset of text
+                (if len_=True then return (text, len(text)))
     """
     dataset = dataset.map(lambda x: transform.text.string2int(
         x, alphabet_size, first_letter),num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.padded_batch(batch)
     dataset = dataset.map(lambda x: transform.text.one_hot_encode(
         x, remove_comma, alphabet_size),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    
+    lengths = lengths.map(lambda x: tf.strings.to_number(x, tf.dtypes.int32))
+
+    if len_:
+         dataset = tf.data.Dataset.zip((dataset, lengths))
 
     return dataset
 
@@ -180,7 +190,7 @@ def _split_dataset(x, idx):
 def text_audio(src, split, reverse, batch, threshold,
                is_spectrogram, melspectrogram={}, remove_comma=True,
                alphabet_size=26, first_letter=96, sampling_rate=16000,
-               buffer_size=1000):
+               buffer_size=1000, len_=False):
     """
     Text and Audio pipeline  
 
@@ -200,7 +210,7 @@ def text_audio(src, split, reverse, batch, threshold,
     dataset = load.load_split(src, split)
     dataset["text"] = dataset["text"].map(
         lambda x: text.clean_text(x, remove_comma))
-    dataset = dataset[["id", "text"]]
+    dataset = dataset[["id", "text", "text_len"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
@@ -208,6 +218,8 @@ def text_audio(src, split, reverse, batch, threshold,
     audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
     text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
+                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    lengths = dataset.map(lambda x: _split_dataset(x=x, idx=2),
                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     audio_dataset = _audio(dataset=audio_dataset,
@@ -222,7 +234,9 @@ def text_audio(src, split, reverse, batch, threshold,
                          batch=batch,
                          remove_comma=remove_comma,
                          alphabet_size=alphabet_size,
-                         first_letter=first_letter)
+                         first_letter=first_letter,
+                         lengths=lengths,
+                         len_=len_)
 
     if reverse:
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
