@@ -137,31 +137,32 @@ def _speaker(speaker, data, num_recordes,
 
         recordes = []
         speaker = data[data["speaker"] == speaker]
-
+        len_ = sampling_rate*max_time
+        print("speaker.shape")
+        print(speaker.shape)
+        speaker = speaker[speaker["audio_len"]>=len_]
+        print("speaker.shape")
+        print(speaker.shape)
         #pylint: disable=unexpected-keyword-arg
         rand_idx = np.random.uniform(
             size=num_recordes,
             low=0,
             high=speaker.shape[0]).tolist()
-
+        
         for idx in rand_idx:
             idx = int(idx)
-            rec = data.iloc[idx, :]
+            rec = speaker.iloc[idx, :]
             id_ = rec["id"]
 
             sample = load.load_wav(src, id_)
-            sample = audio.audio_cleaning(sample, threshold)
-            len_ = sampling_rate*max_time
-            start = 0
-            sample = sample[start:start+len_]
-            if start+len_ > sample.shape[0]:
-                rand_idx_ = np.random.uniform(
-                    size=num_recordes,
-                    low=0,
-                    high=speaker.shape[0]).tolist()
-                rand_idx.append(rand_idx_[0])
-                continue
             sample = tf.squeeze(sample, axis =-1)
+            
+            start = np.random.uniform(
+                    size=1,
+                    low=0,
+                    high=sample.shape[0]-len_-1).tolist()[0]
+
+            sample = sample[int(start):int(start)+len_]
             sample = transform.audio.melspectrogram(
                     sample, sampling_rate, False, **melspectrogram)
 
@@ -304,8 +305,10 @@ def speaker_verification(src, split, batch, melspectrogram,
                          num_recordes, threshold, max_time=5,
                          sampling_rate=16000, buffer_size=1000):
 
-    data = load.load_split(src, split)
-    dataset = data["speaker"]
+    dataset = load.load_split(src, split)
+    len_ = sampling_rate*max_time
+    dataset = dataset[dataset["audio_len"]>=len_]
+    dataset = dataset["speaker"]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
@@ -316,9 +319,9 @@ def speaker_verification(src, split, batch, melspectrogram,
                                                      threshold=threshold,
                                                      melspectrogram=melspectrogram,
                                                      sampling_rate=sampling_rate,
-                                                     max_time=5),
-                                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
+                                                     max_time=5))#,
+                                                     #num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     speaker_dataset = speaker_dataset.batch(batch)
-    speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    # speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return speaker_dataset
