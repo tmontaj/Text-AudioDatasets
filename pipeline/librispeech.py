@@ -86,9 +86,12 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
         x, remove_comma, alphabet_size),num_parallel_calls=tf.data.experimental.AUTOTUNE)
     
     lengths = lengths.map(lambda x: tf.strings.to_number(x, tf.dtypes.int32))
+    
+    # dataset = dataset.unbatch()
 
     if len_:
-         dataset = tf.data.Dataset.zip((dataset, lengths))
+        lengths = lengths.batch(batch)
+        dataset = tf.data.Dataset.zip((dataset, lengths))
 
     return dataset
 
@@ -120,6 +123,9 @@ def _audio(dataset, batch, src, is_spectrogram,
                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     dataset = dataset.padded_batch(batch)
+
+    # dataset = dataset.unbatch()
+
     return dataset
 
 
@@ -209,6 +215,7 @@ def text_audio(src, split, reverse, batch, threshold,
     dataset -- tf dataset of audio and text preprocessed
     """
     dataset = load.load_split(src, split)
+
     dataset["text"] = dataset["text"].map(
         lambda x: text.clean_text(x, remove_comma))
     dataset = dataset[["id", "text", "text_len"]]
@@ -243,6 +250,8 @@ def text_audio(src, split, reverse, batch, threshold,
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
     else:
         dataset = tf.data.Dataset.zip((text_dataset, audio_dataset))
+    
+    # dataset = dataset.batch(batch)
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return dataset
 
