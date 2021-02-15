@@ -25,7 +25,11 @@ x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
 
 x = x.take(1)
 for i in x:
+    print("__sample__")
     print(i)
+    # print(i[1][0][0])
+    # print(i[1][0].shape)
+    # print(tf.shape(i[1]))
 
 
 # x = pipeline.audio_audio(src=src, split="dev-clean", 

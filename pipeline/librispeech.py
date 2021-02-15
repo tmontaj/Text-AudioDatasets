@@ -62,7 +62,7 @@ def printer(x):
 
 
 def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
-           lengths, len_=False):
+           len_=False):
     """
     Text pipeline  
 
@@ -80,18 +80,10 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
                 (if len_=True then return (text, len(text)))
     """
     dataset = dataset.map(lambda x: transform.text.string2int(
-        x, alphabet_size, first_letter),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        x, alphabet_size, first_letter, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.padded_batch(batch)
     dataset = dataset.map(lambda x: transform.text.one_hot_encode(
-        x, remove_comma, alphabet_size),num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    
-    lengths = lengths.map(lambda x: tf.strings.to_number(x, tf.dtypes.int32))
-    
-    # dataset = dataset.unbatch()
-
-    if len_:
-        lengths = lengths.batch(batch)
-        dataset = tf.data.Dataset.zip((dataset, lengths))
+        x, remove_comma, alphabet_size, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     return dataset
 
@@ -218,7 +210,7 @@ def text_audio(src, split, reverse, batch, threshold,
 
     dataset["text"] = dataset["text"].map(
         lambda x: text.clean_text(x, remove_comma))
-    dataset = dataset[["id", "text", "text_len"]]
+    dataset = dataset[["id", "text"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
@@ -227,9 +219,7 @@ def text_audio(src, split, reverse, batch, threshold,
                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
     text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    lengths = dataset.map(lambda x: _split_dataset(x=x, idx=2),
-                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
+    
     audio_dataset = _audio(dataset=audio_dataset,
                            src=src,
                            batch=batch,
@@ -243,7 +233,6 @@ def text_audio(src, split, reverse, batch, threshold,
                          remove_comma=remove_comma,
                          alphabet_size=alphabet_size,
                          first_letter=first_letter,
-                         lengths=lengths,
                          len_=len_)
 
     if reverse:
