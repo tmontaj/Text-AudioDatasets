@@ -2,7 +2,7 @@
 test hprams file
 """
 hprams = {
-    "splits": ["dev-clean"],
+    "splits": ["dev-clean", "dev-other"],
     "text_audio": {
         "reverse": "False",
         "len_": True,

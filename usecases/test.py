@@ -22,6 +22,7 @@ safe_load(load, wtd, src, hprams["splits"])
 
 
 x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
+x = pipeline.text_audio(src=src, split="dev-other", **hprams["text_audio"])
 
 x = x.take(1)
 for i in x:
