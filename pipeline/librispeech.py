@@ -62,7 +62,7 @@ def printer(x):
 
 
 def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
-           len_=False):
+           len_=False, one_hot_encode=False):
     """
     Text pipeline  
 
@@ -82,8 +82,10 @@ def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
     dataset = dataset.map(lambda x: transform.text.string2int(
         x, alphabet_size, first_letter, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.padded_batch(batch)
-    dataset = dataset.map(lambda x: transform.text.one_hot_encode(
-        x, remove_comma, alphabet_size, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+    if one_hot_encode:
+        dataset = dataset.map(lambda x: transform.text.one_hot_encode(
+            x, remove_comma, alphabet_size, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     return dataset
 
@@ -189,7 +191,7 @@ def _split_dataset(x, idx):
 def text_audio(src, split, reverse, batch, threshold,
                is_spectrogram, melspectrogram={}, remove_comma=True,
                alphabet_size=26, first_letter=96, sampling_rate=16000,
-               buffer_size=1000, len_=False):
+               buffer_size=1000, len_=False, one_hot_encode=False):
     """
     Text and Audio pipeline  
 
@@ -202,7 +204,7 @@ def text_audio(src, split, reverse, batch, threshold,
     alphabet_size -- alphabet size of the language (Default = 26)
     first_letter  -- number of first letter in the alphabet when passed ord() (Default = 96)
     remove_comma  -- flag to remove comma or not (Default = True)
-
+    one_hot_encode -- flag to return text as one hot encode or as index of it (Default = False, index)
     Returns:
     dataset -- tf dataset of audio and text preprocessed
     """
@@ -233,7 +235,8 @@ def text_audio(src, split, reverse, batch, threshold,
                          remove_comma=remove_comma,
                          alphabet_size=alphabet_size,
                          first_letter=first_letter,
-                         len_=len_)
+                         len_=len_,
+                         one_hot_encode=one_hot_encode)
 
     if reverse:
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
