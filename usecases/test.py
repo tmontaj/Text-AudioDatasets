@@ -10,7 +10,7 @@ from data.load.libri_what_to_download import what_to_download as wtd  # pylint: 
 from data.load import safe_load  # pylint: disable=imports
 from hprams.test import hprams  # pylint: disable=imports
 import pipeline.librispeech as pipeline  # pylint: disable=imports
-
+import tensorflow as tf
 
 
 print(os.path.dirname(os.path.abspath(__file__)))
@@ -22,15 +22,17 @@ safe_load(load, wtd, src, hprams["splits"])
 
 
 x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
-x = pipeline.text_audio(src=src, split="dev-other", **hprams["text_audio"])
+# x = pipeline.text_audio(src=src, split="dev-other", **hprams["text_audio"])
 
-x = x.take(1)
+x = x.take(2)
 for i in x:
     print("__sample__")
-    print(i)
+    print("audio", i[0])
+    print("text", i[1])
     # print(i[1][0][0])
     # print(i[1][0].shape)
-    # print(tf.shape(i[1]))
+    print("text shape 1", tf.shape(i[1][0]))
+    print("text shape 2", tf.shape(i[1][1]))
 
 
 # x = pipeline.audio_audio(src=src, split="dev-clean", 

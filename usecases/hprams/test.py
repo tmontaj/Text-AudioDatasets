@@ -6,7 +6,7 @@ hprams = {
     "text_audio": {
         "reverse": "False",
         "len_": True,
-        "batch": 1,
+        "batch": 2,
         "threshold": 5,
         "is_spectrogram": False,
         "remove_comma": True,

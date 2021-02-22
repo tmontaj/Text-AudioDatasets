@@ -111,6 +111,9 @@ def _audio(dataset, batch, src, is_spectrogram,
     dataset = dataset.map(lambda x: tf.squeeze(x, axis =-1),
                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
+    dataset_len = dataset.map(lambda x: tf.shape(x),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
     if is_spectrogram:
         dataset = dataset.map(lambda x: transform.audio.melspectrogram(
             x, sampling_rate, False, **melspectrogram),
@@ -120,7 +123,7 @@ def _audio(dataset, batch, src, is_spectrogram,
 
     # dataset = dataset.unbatch()
 
-    return dataset
+    return dataset, dataset_len
 
 
 def _speaker(speaker, data, num_recordes,
@@ -138,11 +141,8 @@ def _speaker(speaker, data, num_recordes,
         recordes = []
         speaker = data[data["speaker"] == speaker]
         len_ = sampling_rate*max_time
-        print("speaker.shape")
-        print(speaker.shape)
         speaker = speaker[speaker["audio_len"]>=len_]
-        print("speaker.shape")
-        print(speaker.shape)
+        
         #pylint: disable=unexpected-keyword-arg
         rand_idx = np.random.uniform(
             size=num_recordes,
@@ -179,7 +179,6 @@ def _speaker(speaker, data, num_recordes,
                               sampling_rate,
                               max_time],
                              tf.float32)
-
 
 def _split_dataset(x, idx):
     """
@@ -222,7 +221,7 @@ def text_audio(src, split, reverse, batch, threshold,
     text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
     
-    audio_dataset = _audio(dataset=audio_dataset,
+    audio_dataset, audio_dataset_len = _audio(dataset=audio_dataset,
                            src=src,
                            batch=batch,
                            is_spectrogram=is_spectrogram,
@@ -237,6 +236,10 @@ def text_audio(src, split, reverse, batch, threshold,
                          first_letter=first_letter,
                          len_=len_,
                          one_hot_encode=one_hot_encode)
+    text_dataset = text_dataset.unbatch()
+    text_dataset = tf.data.Dataset.zip((audio_dataset_len, text_dataset))
+    text_dataset = text_dataset.map(lambda len_, text: tf.concat((len_, text), axis=0)) 
+    text_dataset = text_dataset.batch(batch)
 
     if reverse:
         dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
