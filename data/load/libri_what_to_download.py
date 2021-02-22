@@ -93,7 +93,7 @@ def check_librispeech_md5sum(src):
   wget.download("https://www.openslr.org/resources/12/md5sum.txt", src+"/librispeech"+"/md5sum.txt")
   
   real_sum         = load_md5sum_file(src+"/librispeech")
-  calculated_sum   = calculate_md5sum(main=src+"/librispeech"+"/out", pattern = '*.tar.gz') #update this line 
+  calculated_sum   = calculate_md5sum(main=src+"/librispeech"+"/out", pattern = '*.tar.gz') 
   sum_intersection = real_sum.merge(calculated_sum, on=["split"], how="inner")
 
 
@@ -104,7 +104,10 @@ def check_librispeech_md5sum(src):
                                sum_intersection.md5sum_y].split.tolist()
 
   missing   = list(set(real_sum.split.tolist()).difference(set(sum_intersection.split.tolist())))
-
+  print("__splits__")
+  print("\nmatch: ", match)
+  print("not_match: ", not_match)
+  print("missing: ", missing)
   return match, not_match, missing
 
 def clean_split_name(splits):
