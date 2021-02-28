@@ -111,12 +111,14 @@ def _audio(dataset, batch, src, is_spectrogram,
     dataset = dataset.map(lambda x: tf.squeeze(x, axis =-1),
                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-    dataset_len = dataset.map(lambda x: tf.shape(x),
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
     if is_spectrogram:
         dataset = dataset.map(lambda x: transform.audio.melspectrogram(
             x, sampling_rate, False, **melspectrogram),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        dataset_len = dataset.map(lambda x: tf.shape(x)[0],
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    else:
+        dataset_len = dataset.map(lambda x: tf.shape(x),
                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     dataset = dataset.padded_batch(batch)
