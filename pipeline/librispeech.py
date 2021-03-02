@@ -215,13 +215,15 @@ def text_audio(src, split, reverse, batch, threshold,
         lambda x: text.clean_text(x, remove_comma))
     dataset = dataset[["id", "text"]]
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
-    if buffer_size:
-        dataset = dataset.shuffle(buffer_size)
+    # if buffer_size:
+    #     dataset = dataset.shuffle(buffer_size)
 
-    audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
-                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
-                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # dataset = dataset.padded_batch(batch)
+
+    # audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
+    #                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
+    #                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
     
     audio_dataset, audio_dataset_len = _audio(dataset=audio_dataset,
                            src=src,
@@ -248,8 +250,8 @@ def text_audio(src, split, reverse, batch, threshold,
     else:
         dataset = tf.data.Dataset.zip((text_dataset, audio_dataset))
     
-    # dataset = dataset.batch(batch)
-    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    # # dataset = dataset.batch(batch)
+    # dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return dataset
 
 

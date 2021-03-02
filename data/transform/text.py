@@ -43,10 +43,10 @@ def string2int(text, alphabet_size = 26, first_letter=97, len_=True):
         text -- list of letter indexes 
     """
     text = tf.strings.unicode_decode(text, input_encoding="UTF-8")
-    text = text-first_letter+1 # so first char have code = 1
-    text = tf.where(text==-50, alphabet_size+1, text) # replace dot
-    text = tf.where(text==-64, alphabet_size+2, text) # replace space
-    text = tf.where(text==-52, alphabet_size+3, text) # replace comma
+    text = text-first_letter+1
+    text = tf.where(text==(46-first_letter+1), alphabet_size+1, text) # replace dot
+    text = tf.where(text==(32-first_letter+1), alphabet_size+2, text) # replace space
+    text = tf.where(text==(44-first_letter+1), alphabet_size+3, text) # replace comma
     
     text = tf.concat(values=(tf.shape(text), text), axis=0)
     
@@ -123,14 +123,13 @@ def int2string(ints, alphabet_size = 26, first_letter=97, len_=True):
     Returns:
         text -- list of letter indexes 
     """
-    ints = ints[ints > 0]
+    ints = ints[ints != 0]
+    ints = ints+first_letter-1
 
-    ints = ints-1 # first char is 1
+    ints = tf.where(ints==(first_letter-1)+alphabet_size+1, 46, ints) # replace dot
+    ints = tf.where(ints==(first_letter-1)+alphabet_size+2, 32, ints) # replace space
+    ints = tf.where(ints==(first_letter-1)+alphabet_size+3, 44, ints) # replace comma
 
-    ints = tf.where(ints==alphabet_size+1, -50, ints) # replace dot
-    ints = tf.where(ints==alphabet_size+2, -64, ints) # replace dot
-    ints = tf.where(ints==alphabet_size+3, -52, ints) # replace space
-    
-    ints = tf.strings.unicode_encode(ints, input_encoding="UTF-8")
-    
+    ints = tf.strings.unicode_encode(ints, output_encoding="UTF-8")
+    # ints = ints.numpy().decode('UTF-8')
     return ints

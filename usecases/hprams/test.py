@@ -11,7 +11,7 @@ hprams = {
         "is_spectrogram": False,
         "remove_comma": True,
         "alphabet_size": 26,
-        "first_letter": 96,
+        "first_letter": 97,
         "sampling_rate": 16000,
         "buffer_size": 1000,
         "melspectrogram": {
