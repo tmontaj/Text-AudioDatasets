@@ -9,6 +9,7 @@ from data.load.librispeech import load  # pylint: disable=imports
 from data.load.libri_what_to_download import what_to_download as wtd  # pylint: disable=imports
 from data.load import safe_load  # pylint: disable=imports
 import data.transform.text as t_text  # pylint: disable=imports
+import data.transform.audio as t_audio  # pylint: disable=imports
 from hprams.test import hprams  # pylint: disable=imports
 import pipeline.librispeech as pipeline  # pylint: disable=imports
 import tensorflow as tf
@@ -28,7 +29,7 @@ safe_load(load, wtd, src, hprams["splits"])
 x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
 # x = pipeline.text_audio(src=src, split="dev-other", **hprams["text_audio"])
 
-x = x.take(1)
+x = x.take(4)
 i=0
 
 def save_wav(wav, path, sr):
@@ -37,17 +38,26 @@ def save_wav(wav, path, sr):
 
 # dataset = load.load_split(src=src, split="dev-clean")
 # print(dataset.head())
-for i in x:
-    print(i)
+# i=0
+# for audio, text in x:
+#     print("-------batch print---------")
+#     print(i)
+#     print("text[0]")#.numpy())
+#     print(text[0])#.numpy())
+#     print("audio[0]")
+#     print(audio[0])
 
 i=0
 for audio, text in x:
-    audio = audio[0].numpy()
-    text = text[0][2:]
+    audio = audio[0]
+    audio = t_audio.inverse_melspectrogram(audio, 16000, text[0][0], **hprams["text_audio"]["melspectrogram"])
+    text = text[0][3:]
     text = t_text.int2string(text)
     print("----------------")
-    print(text)#.numpy())
-    # print(audio)
+    print(i)
+    print(text)
+    print(audio)
+    print(audio.shape)
     save_wav(wav=audio, path="test%d.wav"%(i), sr=16000)
     i+=1
 

@@ -53,79 +53,15 @@ import data.transform.audio as t_audio  # pylint: disable=imports
 import data.transform.text as t_text  # pylint: disable=imports
 import data.load.librispeech as load # pylint: disable=imports
 import pandas as pd
- 
+from scipy.io.wavfile import write
+def save_wav(wav, path, sr):
+    wav *= 32767 / max(0.0001, np.max(np.abs(wav)))
+    write(path, sr, wav.astype(np.int16)) 
 
 def printer(x):
     tf.print("||||||printer|||||||")
     tf.print(x.shape)
     return x
-
-
-def _text(dataset, batch, remove_comma, alphabet_size, first_letter,
-           len_=False, one_hot_encode=False):
-    """
-    Text pipeline  
-
-    Arguments:
-    dataset -- td dataset to be preprocessed (text)
-    batch   -- batch sizee
-    alphabet_size -- alphabet size of the language 
-    first_letter  -- number of first letter in the alphabet when passed ord()
-    remove_comma  -- flag to remove comma or not
-    len_  -- flag to return length of text witout padding
-    dataset -- td dataset of text length (len(text))
-
-    Returns:
-    dataset -- cleaned, batched, unshufeld, tf dataset of text
-                (if len_=True then return (text, len(text)))
-    """
-    dataset = dataset.map(lambda x: transform.text.string2int(
-        x, alphabet_size, first_letter, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.padded_batch(batch)
-
-    if one_hot_encode:
-        dataset = dataset.map(lambda x: transform.text.one_hot_encode(
-            x, remove_comma, alphabet_size, len_),num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
-    return dataset
-
-
-def _audio(dataset, batch, src, is_spectrogram,
-           threshold, melspectrogram={}, sampling_rate=16000):
-    """
-    Audio pipeline  
-
-    Arguments:
-    dataset   -- td dataset to be preprocessed 
-    batch     -- batch sizee
-    src       -- path to data directory
-    threshold -- threshold of silence to be trimed from audio (remove silnce from start and end)
-    Returns:
-    dataset -- cleaned, batched, unshufeld, tf dataset of audio
-    """
-
-    dataset = dataset.map(lambda x: load.load_wav(src, x),
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.map(lambda x: audio.audio_cleaning(x, threshold),
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.map(lambda x: tf.squeeze(x, axis =-1),
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
-    if is_spectrogram:
-        dataset = dataset.map(lambda x: transform.audio.melspectrogram(
-            x, sampling_rate, False, **melspectrogram),
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        dataset_len = dataset.map(lambda x: tf.shape(x)[0],
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    else:
-        dataset_len = dataset.map(lambda x: tf.shape(x),
-                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
-    dataset = dataset.padded_batch(batch)
-
-    # dataset = dataset.unbatch()
-
-    return dataset, dataset_len
 
 
 def _speaker(speaker, data, num_recordes,
@@ -213,101 +149,44 @@ def text_audio(src, split, reverse, batch, threshold,
 
     dataset["text"] = dataset["text"].map(
         lambda x: text.clean_text(x, remove_comma))
-    dataset = dataset[["id", "text"]]
-    dataset = tf.data.Dataset.from_tensor_slices(dataset)
-    # if buffer_size:
-    #     dataset = dataset.shuffle(buffer_size)
+    dataset = dataset.sort_values(by=['id'], ascending=True)
+    dataset = tf.data.Dataset.from_tensor_slices((dataset["id"], dataset["text"]))
 
-    # dataset = dataset.padded_batch(batch)
-
-    # audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
-    #                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    # text_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=1),
-    #                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    
-    audio_dataset, audio_dataset_len = _audio(dataset=audio_dataset,
-                           src=src,
-                           batch=batch,
-                           is_spectrogram=is_spectrogram,
-                           melspectrogram=melspectrogram,
-                           threshold=threshold,
-                           sampling_rate=sampling_rate)
-
-    text_dataset = _text(dataset=text_dataset,
-                         batch=batch,
-                         remove_comma=remove_comma,
-                         alphabet_size=alphabet_size,
-                         first_letter=first_letter,
-                         len_=len_,
-                         one_hot_encode=one_hot_encode)
-    text_dataset = text_dataset.unbatch()
-    text_dataset = tf.data.Dataset.zip((audio_dataset_len, text_dataset))
-    text_dataset = text_dataset.map(lambda len_, text: tf.concat((len_, text), axis=0)) 
-    text_dataset = text_dataset.batch(batch)
-
-    if reverse:
-        dataset = tf.data.Dataset.zip((audio_dataset, text_dataset))
-    else:
-        dataset = tf.data.Dataset.zip((text_dataset, audio_dataset))
-    
-    # # dataset = dataset.batch(batch)
-    # dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    return dataset
-
-
-def audio_audio(src, split, reverse, batch, melspectrogram,
-                threshold, sampling_rate=16000, buffer_size=1000):
-    """
-    spctrogram and audio pipeline  
-
-    Arguments:
-    src       -- path to data directory
-    split     -- split name to be loaded (string) e.x. dev
-    reverse   -- flag, if true dataset returned
-                 is formated (audio, spectrogram) else (spectrogram, audio)
-    batch     -- batch sizee
-    threshold -- threshold of silence to be trimed from audio (remove silnce from start and end)
-    sampling_rate -- audio sampling rate. Default = 16000
-    buffer_size -- buffer size for shuffle. Default = 1000
-
-    Returns:
-    dataset -- tf dataset of audio and spectrogram preprocessed
-    """
-    dataset = load.load_split(src, split)
-    dataset["id2"] = dataset["id"]
-    dataset = dataset[["id", "id2"]]
-    dataset = tf.data.Dataset.from_tensor_slices(dataset)
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
+    dataset = dataset.map(lambda x,y: (load.load_wav(src, x), y))
+                                # if thid line is uncommented the x and y gets shuffled
+                                # num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(lambda x,y: (audio.audio_cleaning(x, threshold),y),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(lambda x,y: (tf.squeeze(x, axis=-1),y),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-    audio_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
-                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    spectro_dataset = dataset.map(lambda x: _split_dataset(x=x, idx=0),
-                                    num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    if is_spectrogram:
+        dataset = dataset.map(lambda x,y: (transform.audio.melspectrogram(
+            x, sampling_rate, False, **melspectrogram), y),
+                                num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        
+    dataset = dataset.map(lambda x,y: (x,transform.text.string2int(
+        y, alphabet_size, first_letter, len_)))#,num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-    audio_dataset = _audio(dataset=audio_dataset,
-                           src=src,
-                           batch=batch,
-                           is_spectrogram=False,
-                           melspectrogram=melspectrogram,
-                           threshold=threshold,
-                           sampling_rate=sampling_rate)
+    if one_hot_encode:
+        dataset = dataset.map(lambda x,y: (x,transform.text.one_hot_encode(
+            y, remove_comma, alphabet_size, len_)),num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    
+    dataset = dataset.map(lambda x,y: (x, tf.concat((tf.shape(x), y), axis=0)))
 
-    spectro_dataset = _audio(dataset=spectro_dataset,
-                             src=src,
-                             batch=batch,
-                             is_spectrogram=True,
-                             melspectrogram=melspectrogram,
-                             threshold=threshold,
-                             sampling_rate=sampling_rate)
-
-    if reverse:
-        dataset = tf.data.Dataset.zip((audio_dataset, spectro_dataset))
+    if is_spectrogram:
+        dataset = dataset.padded_batch(batch, padded_shapes=([None,None], [None]))
     else:
-        dataset = tf.data.Dataset.zip((spectro_dataset, audio_dataset))
-    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    return dataset
+        dataset = dataset.padded_batch(batch, padded_shapes=([None], [None]))
+    
+    if not reverse:
+        dataset = dataset.map(lambda x,y: (y,x))
 
+    dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+    return dataset
 
 def speaker_verification(src, split, batch, melspectrogram,
                          num_recordes, threshold, max_time=5,

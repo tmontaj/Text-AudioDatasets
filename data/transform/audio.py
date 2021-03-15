@@ -105,10 +105,10 @@ def melspectrogram(audio, sampling_rate, plot, nfft=800, window=512,
   else:
     audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=[unexpected-keyword-arg, no-value-for-parameter]
 
-  spectro = tfio.experimental.audio.spectrogram(audio, nfft=800, window=512, stride=200)
-  spectro = tfio.experimental.audio.melscale(spectro, rate=sampling_rate, mels=80, fmin=0, fmax=8000)
+  spectro = tfio.experimental.audio.spectrogram(audio, nfft=nfft, window=window, stride=stride)
+  spectro = tfio.experimental.audio.melscale(spectro, rate=sampling_rate, mels=mels, fmin=fmin, fmax=fmax)
   
-  if plot == 1 :
+  if plot == True:
     plot_melsprctrogram(spectro)
   
   return spectro
@@ -127,3 +127,26 @@ def pad(audios):
       return tf.keras.preprocessing.sequence.pad_sequences(audios, maxlen=None,
                                                         dtype='int32', padding='post', value=0.0)
   return tf.numpy_function(_pad, [audios], [tf.float32])
+
+def inverse_melspectrogram(spectro, sampling_rate, length, nfft=800, window=512,
+                   stride=200, mels=80, fmin=0, fmax=8000):
+  """
+  genrate mel spectrogram of mono audio 
+
+  Arguments:
+  spectro -- mel spectrogram
+  sampling_rate -- sampling rate of input audio 
+  length -- len_ of input without padding
+  For the rest of the parametars please read TF docuentation
+  
+  Return:
+  audio -- mono audio list
+  """
+  
+  spectro = spectro[:length, :]
+  spectro = tf.stack(spectro, axis=1)
+  spectro = spectro.numpy()
+
+  audio = librosa.feature.inverse.mel_to_audio(spectro, sr=sampling_rate, fmin=fmin, fmax=fmax,
+                                                        n_fft=nfft, win_length=window, hop_length=stride)
+  return audio

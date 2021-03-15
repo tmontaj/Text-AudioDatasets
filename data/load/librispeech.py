@@ -341,7 +341,6 @@ def load_wav(src, id):
   wav -- np array of mono sound file
   sample_rate -- sample rate for librispeech = 16000 
   """
-
   id = tf.strings.split(id, sep="/")
   file_name = id[1] + ".flac"
   sub_folder = tf.strings.regex_replace(id[1], pattern="-", rewrite="/")
@@ -351,7 +350,8 @@ def load_wav(src, id):
   audio = tf.cast(audio, dtype=tf.float32) # pylint: disable=[unexpected-keyword-arg, no-value-for-parameter]
 
   return audio
-  # return tf.numpy_function(_load_wav, [src, id], [tf.int32])
+
+
 def get_audio_len(src, dataset):
   def load_wav_len(id):
     return load_wav(src, id).shape[0]
@@ -372,7 +372,7 @@ def load_split(src, split):
   """
   dataset = load_all_trans(src)
   # print(dataset["text_len"])
-  dataset = get_audio_len(src, dataset)
+  # dataset = get_audio_len(src, dataset)
 
   split, clean = split.split("-")[0], split.split("-")[1] 
   clean        = True if clean == "clean" else False
