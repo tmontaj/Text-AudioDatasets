@@ -124,6 +124,11 @@ def _split_dataset(x, idx):
     """
     return x[idx]
 
+def set_shapes(x, y, melspectrogram):
+    if melspectrogram is not {}:
+        x.set_shape([None, melspectrogram["mels"]])
+    y.set_shape([None])
+    return (x,y)
 
 def text_audio(src, split, reverse, batch, threshold,
                is_spectrogram, melspectrogram={}, remove_comma=True,
@@ -176,8 +181,10 @@ def text_audio(src, split, reverse, batch, threshold,
     
     dataset = dataset.map(lambda x,y: (x, tf.concat((tf.shape(x), y), axis=0)))
 
+    dataset = dataset.map(lambda x,y: set_shapes(x, y, melspectrogram))
+
     if is_spectrogram:
-        dataset = dataset.padded_batch(batch, padded_shapes=([None,None], [None]))
+        dataset = dataset.padded_batch(batch, padded_shapes=([None,melspectrogram["mels"]], [None]))
     else:
         dataset = dataset.padded_batch(batch, padded_shapes=([None], [None]))
     
