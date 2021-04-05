@@ -191,7 +191,9 @@ def text_audio(src, split, reverse, batch, threshold,
     if not reverse:
         dataset = dataset.map(lambda x,y: (y,x))
 
+    dataset = dataset.repeat()
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.cache()
 
     return dataset
 
