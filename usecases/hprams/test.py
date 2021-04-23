@@ -37,7 +37,7 @@ hprams = {
                 "fmax": 8000
         }
     },"speaker_verification": {
-        "batch": 32,
+        "batch": 2,
         "threshold": 5,
         "sampling_rate": 16000,
         "buffer_size": 1000,

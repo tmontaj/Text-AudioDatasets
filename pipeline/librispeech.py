@@ -63,55 +63,70 @@ def printer(x):
     tf.print(x.shape)
     return x
 
+def load_speaker(src, speaker, id_):
+    id_ = int(id_)
+    id_ = speaker[id_, 1]
+    sample = load.load_wav(src.decode(), id_.decode())
+    sample = tf.squeeze(sample, axis =-1)
+    
+    return sample
 
-def _speaker(speaker, data, num_recordes,
-             threshold, melspectrogram,
-             sampling_rate, max_time=5):
-
-    def _speaker_(speaker, data, num_recordes,
-                  threshold, sampling_rate, max_time=5):
-
-        src, split = data[0].decode(), data[1].decode()
-        speaker = speaker.decode()
-
-        data = load.load_split(src, split)
-
-        recordes = []
-        speaker = data[data["speaker"] == speaker]
-        len_ = sampling_rate*max_time
-        speaker = speaker[speaker["audio_len"]>=len_]
-        
-        #pylint: disable=unexpected-keyword-arg
-        rand_idx = np.random.uniform(
-            size=num_recordes,
-            low=0,
-            high=speaker.shape[0]).tolist()
-        
-        for idx in rand_idx:
-            idx = int(idx)
-            rec = speaker.iloc[idx, :]
-            id_ = rec["id"]
-
-            sample = load.load_wav(src, id_)
-            sample = tf.squeeze(sample, axis =-1)
-            
+def load_len_(src, speaker, id_, len_, sampling_rate, melspectrogram):
+    total_len=0
+    result = np.zeros((len_))
+    while total_len < len_:
+        sample = load_speaker(src, speaker, id_)
+        if sample.shape[0]>len_:
             start = np.random.uniform(
                     size=1,
                     low=0,
                     high=sample.shape[0]-len_-1).tolist()[0]
 
             sample = sample[int(start):int(start)+len_]
-            sample = transform.audio.melspectrogram(
-                    sample, sampling_rate, False, **melspectrogram)
 
-            recordes.append(sample)
+        if sample.shape[0]+total_len>len_:
+            sample = sample[0:len_-total_len]
+        
+        result[total_len:total_len+sample.shape[0]]=sample
 
-        recordes = tf.stack(recordes)
+        id_=(id_+1)%speaker.shape[0]
+        total_len+=sample.shape[0]
+
+    result = transform.audio.melspectrogram(
+                    result, sampling_rate, False, **melspectrogram)
+    return result
+     
+
+
+def _speaker(src, speaker, data, output_dims, num_recordes,
+             threshold, sampling_rate, max_time, melspectrogram,):
+
+    def _speaker_(src, speaker, data, output_dims, num_recordes,
+                  threshold, sampling_rate, max_time):
+                  
+        len_ = sampling_rate*max_time
+        
+        recordes = np.zeros((num_recordes, output_dims[0], output_dims[1]), dtype=np.float32)
+        
+        speaker = data[data[:,0]==speaker]
+        
+        #pylint: disable=unexpected-keyword-arg
+        random_sampels_idx = np.random.uniform(
+            size=num_recordes,
+            low=0,
+            high=speaker.shape[0]-1).tolist()
+        
+        for i, sample in enumerate(random_sampels_idx):
+            rec = load_len_(src, speaker, sample, len_, sampling_rate, melspectrogram)
+            recordes[i] = rec
+
         return recordes
 
     return tf.numpy_function(_speaker_,
-                             [speaker,
+                             [src,
+                              speaker,
                               data,
+                              output_dims,
                               num_recordes,
                               threshold,
                               sampling_rate,
@@ -201,23 +216,32 @@ def speaker_verification(src, split, batch, melspectrogram,
                          num_recordes, threshold, max_time=5,
                          sampling_rate=16000, buffer_size=1000):
 
-    dataset = load.load_split(src, split)
-    len_ = sampling_rate*max_time
-    dataset = dataset[dataset["audio_len"]>=len_]
-    dataset = dataset["speaker"]
+    dataset_row = load.load_split(src, split)
+    
+    dataset = dataset_row.speaker.unique()
     dataset = tf.data.Dataset.from_tensor_slices(dataset)
+    data = dataset_row[["speaker","id"]]
+    len_ = sampling_rate*max_time
+    sample = np.zeros((len_), dtype=np.float32)
+    output_dims = transform.audio.melspectrogram(
+                    sample, sampling_rate, False, **melspectrogram).shape
+    
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
 
-    speaker_dataset = dataset.map(lambda x: _speaker(speaker=x,
-                                                     data=(src, split),
+    speaker_dataset = dataset.map(lambda x: printer(x))
+    speaker_dataset = dataset.map(lambda x: _speaker(
+                                                     src=src,
+                                                     speaker=x,
+                                                     data=data,
+                                                     output_dims=output_dims,
                                                      num_recordes=num_recordes,
                                                      threshold=threshold,
                                                      melspectrogram=melspectrogram,
                                                      sampling_rate=sampling_rate,
-                                                     max_time=5))#,
-                                                     #num_parallel_calls=tf.data.experimental.AUTOTUNE)
+                                                     max_time=5),
+                                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     speaker_dataset = speaker_dataset.batch(batch)
-    # speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return speaker_dataset

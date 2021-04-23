@@ -26,10 +26,10 @@ src = os.path.join(home, "dataset")
 safe_load(load, wtd, src, hprams["splits"])
 
 
-x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
+# x = pipeline.text_audio(src=src, split="dev-clean", **hprams["text_audio"])
 # x = pipeline.text_audio(src=src, split="dev-other", **hprams["text_audio"])
 
-x = x.take(4)
+# x = x.take(4)
 i=0
 
 def save_wav(wav, path, sr):
@@ -47,19 +47,19 @@ def save_wav(wav, path, sr):
 #     print("audio[0]")
 #     print(audio[0])
 
-i=0
-for audio, text in x:
-    audio = audio[0]
-    audio = t_audio.inverse_melspectrogram(audio, 16000, text[0][0], **hprams["text_audio"]["melspectrogram"])
-    text = text[0][3:]
-    text = t_text.int2string(text)
-    print("----------------")
-    print(i)
-    print(text)
-    print(audio)
-    print(audio.shape)
-    save_wav(wav=audio, path="test%d.wav"%(i), sr=16000)
-    i+=1
+# i=0
+# for audio, text in x:
+#     audio = audio[0]
+#     audio = t_audio.inverse_melspectrogram(audio, 16000, text[0][0], **hprams["text_audio"]["melspectrogram"])
+#     text = text[0][3:]
+#     text = t_text.int2string(text)
+#     print("----------------")
+#     print(i)
+#     print(text)
+#     print(audio)
+#     print(audio.shape)
+#     save_wav(wav=audio, path="test%d.wav"%(i), sr=16000)
+#     i+=1
 
 
 # text = t_text.int2string([1,0,0,0,0])
@@ -82,9 +82,25 @@ for audio, text in x:
 #     print(i)
 
 
-# x = pipeline.speaker_verification(
-#     src=src, split="dev-clean", **hprams["speaker_verification"])
+x = pipeline.speaker_verification(
+    src=src, split="dev-clean", **hprams["speaker_verification"])
 
-# x = x.take(1)
-# for i in x:
+x = x.take(1)
+for i in x:
+    print(i)
+
+
+
+# i=0
+# for audio, text in x:
+#     audio = audio[0]
+#     audio = t_audio.inverse_melspectrogram(audio, 16000, text[0][0], **hprams["text_audio"]["melspectrogram"])
+#     text = text[0][3:]
+#     text = t_text.int2string(text)
+#     print("----------------")
 #     print(i)
+#     print(text)
+#     print(audio)
+#     print(audio.shape)
+#     save_wav(wav=audio, path="test%d.wav"%(i), sr=16000)
+#     i+=1
