@@ -229,7 +229,6 @@ def speaker_verification(src, split, batch, melspectrogram,
     if buffer_size:
         dataset = dataset.shuffle(buffer_size)
 
-    speaker_dataset = dataset.map(lambda x: printer(x))
     speaker_dataset = dataset.map(lambda x: _speaker(
                                                      src=src,
                                                      speaker=x,
@@ -239,8 +238,7 @@ def speaker_verification(src, split, batch, melspectrogram,
                                                      threshold=threshold,
                                                      melspectrogram=melspectrogram,
                                                      sampling_rate=sampling_rate,
-                                                     max_time=5),
-                                                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
+                                                     max_time=5))
 
     speaker_dataset = speaker_dataset.batch(batch)
     speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
