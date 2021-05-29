@@ -99,13 +99,23 @@ for batch in x:
         for rec in speaker:
             print(i)
             rec = t_audio.inverse_melspectrogram(rec, 16000, rec.shape[0], **hprams["speaker_verification"]["melspectrogram"])
-            save_wav(wav=rec, path="test_s=%d_r=%d.wav"%(n, i), sr=16000)
+            save_wav(wav=rec, path="1 test_s=%d_r=%d.wav"%(n, i), sr=16000)
 
             print("test_s=%d_r=%d.wav"%(n, i))
             i+=1    
         n+=1
 
-
+# epochs = 5
+# for e in range(epochs):
+#     print("")
+#     print("***********%d*************"%(e))
+#     n=0
+#     for i in x:
+#         print(n)
+#         print(i.shape)
+#         # print(i)
+#         n+=1
+    
 
 # i=0
 # for audio, text in x:
