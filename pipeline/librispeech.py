@@ -240,7 +240,7 @@ def speaker_verification(src, split, batch, melspectrogram,
                                                      melspectrogram=melspectrogram,
                                                      sampling_rate=sampling_rate,
                                                      max_time=5))
-
+ 
     # speaker_dataset = dataset.batch(batch)
     speaker_dataset = speaker_dataset.batch(batch)
     speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
