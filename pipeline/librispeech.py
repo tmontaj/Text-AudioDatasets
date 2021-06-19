@@ -172,8 +172,8 @@ def text_audio(src, split, reverse, batch, threshold,
     dataset = dataset.sort_values(by=['id'], ascending=True)
     dataset = tf.data.Dataset.from_tensor_slices((dataset["id"], dataset["text"]))
 
-    if buffer_size:
-        dataset = dataset.shuffle(buffer_size)
+    # if buffer_size:
+    #     dataset = dataset.shuffle(buffer_size)
     dataset = dataset.map(lambda x,y: (load.load_wav(src, x), y))
                                 # if thid line is uncommented the x and y gets shuffled
                                 # num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -186,7 +186,7 @@ def text_audio(src, split, reverse, batch, threshold,
         dataset = dataset.map(lambda x,y: (transform.audio.melspectrogram(
             x, sampling_rate, False, **melspectrogram), y),
                                 num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        
+    # dataset = dataset.map(lambda x,y: (x/1000, y)) 
     dataset = dataset.map(lambda x,y: (x,transform.text.string2int(
         y, alphabet_size, first_letter, len_)))#,num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
@@ -206,6 +206,7 @@ def text_audio(src, split, reverse, batch, threshold,
     if not reverse:
         dataset = dataset.map(lambda x,y: (y,x))
 
+    dataset = dataset.take(2)
     dataset = dataset.repeat()
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     dataset = dataset.cache()
@@ -245,3 +246,41 @@ def speaker_verification(src, split, batch, melspectrogram,
     speaker_dataset = speaker_dataset.batch(batch)
     speaker_dataset = speaker_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return speaker_dataset
+
+
+def load_single_sample_(model, sample, len_):
+    if len(sample.shape)==2:
+        sample = tf.expand_dims(sample, 0)
+    
+    y_pred = model(sample)
+    y_pred = decoder(y_pred, sequence_length=[len_])
+    y_pred = tf.cast(y_pred[0], tf.int32)
+    y_pred = int2string(y_pred)
+
+    return y_pred
+
+
+def load_sample_text_audio(src, idx, split, reverse, batch, threshold,
+               is_spectrogram, melspectrogram={}, remove_comma=True,
+               alphabet_size=26, first_letter=96, sampling_rate=16000,
+               buffer_size=1000, len_=False, one_hot_encode=False):
+    
+    dataset = load.load_split(src, split)
+    dataset["text"] = dataset["text"].map(
+        lambda x: text.clean_text(x, remove_comma))
+    dataset = dataset.sort_values(by=['id'], ascending=True)
+    
+    sample = dataset.iloc[idx]["id"]
+    output = dataset.iloc[idx]["text"]
+
+    x = load.load_wav(src, sample)
+    x = audio.audio_cleaning(x, threshold)
+    x = tf.squeeze(x, axis=-1)
+    x = transform.audio.melspectrogram(
+            x, sampling_rate, False, **melspectrogram)
+
+    y = transform.text.string2int(output, alphabet_size, first_letter, len_)
+    y = tf.concat((tf.shape(x), y), axis=0)
+
+    x, y = set_shapes(x, y, melspectrogram)
+    return x, y
