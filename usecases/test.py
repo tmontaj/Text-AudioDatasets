@@ -85,15 +85,42 @@ def save_wav(wav, path, sr):
 x = pipeline.speaker_verification(
     src=src, split="dev-clean", **hprams["speaker_verification"])
 
+
 x = x.take(1)
-for i in x:
-    print(i)
+# for i in x:
+#     print(i)
 
+i=0
+for batch in x:
+    n=0
+    # print("hi")
+    for speaker in batch:
+        i=0
+        for rec in speaker:
+            print(i)
+            rec = t_audio.inverse_melspectrogram(rec, 16000, rec.shape[0], **hprams["speaker_verification"]["melspectrogram"])
+            save_wav(wav=rec, path="1 test_s=%d_r=%d.wav"%(n, i), sr=16000)
 
+            print("test_s=%d_r=%d.wav"%(n, i))
+            i+=1    
+        n+=1
+
+# epochs = 5
+# for e in range(epochs):
+#     print("")
+#     print("***********%d*************"%(e))
+#     n=0
+#     for i in x:
+#         print(n)
+#         print(i.shape)
+#         # print(i)
+#         n+=1
+    
 
 # i=0
 # for audio, text in x:
 #     audio = audio[0]
+#     # print(text[0][0])
 #     audio = t_audio.inverse_melspectrogram(audio, 16000, text[0][0], **hprams["text_audio"]["melspectrogram"])
 #     text = text[0][3:]
 #     text = t_text.int2string(text)

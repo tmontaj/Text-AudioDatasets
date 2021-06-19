@@ -42,6 +42,7 @@ hprams = {
         "sampling_rate": 16000,
         "buffer_size": 1000,
         "num_recordes": 3,
+        "buffer_size":0,
         "melspectrogram": {
                 "nfft": 800,
                 "window": 512,
